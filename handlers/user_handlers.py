@@ -2,7 +2,8 @@ from aiogram import Router
 from aiogram.types import Message
 from aiogram.filters import Command
 from aiogram import F
-
+from datetime import datetime
+from services.json_manager import save_history
 
 user_router = Router()
 
@@ -25,6 +26,15 @@ async def cmd_help(message: Message):
 
 @user_router.message(F.text)
 async def process_echo(message: Message):
+    new_record = {
+        'user_id': message.from_user.id,
+        'text': message.text,
+        'timestamp': datetime.now().isoformat(),
+    }
+
+    JSON_FILE_PATH = 'data/history.json'
+    save_history(JSON_FILE_PATH, new_record)
+
     user_text = message.text
     await message.answer(f'Слышу тебя: {user_text}')
     print(message.text)
