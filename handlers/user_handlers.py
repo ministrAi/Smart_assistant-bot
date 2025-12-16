@@ -4,6 +4,8 @@ from aiogram.filters import Command
 from aiogram import F
 from datetime import datetime
 from services.json_manager import save_history
+from config import HISTORY_FILE_PATH
+from services.ai_manager import get_ai_response
 
 user_router = Router()
 
@@ -32,9 +34,8 @@ async def process_echo(message: Message):
         'timestamp': datetime.now().isoformat(),
     }
 
-    JSON_FILE_PATH = 'data/history.json'
-    save_history(JSON_FILE_PATH, new_record)
+    save_history(HISTORY_FILE_PATH, new_record)
 
-    user_text = message.text
-    await message.answer(f'Слышу тебя: {user_text}')
-    print(message.text)
+    gpt_text = await get_ai_response(message.text)
+    await message.answer(gpt_text)
+
