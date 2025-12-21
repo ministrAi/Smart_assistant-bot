@@ -1,0 +1,5 @@
+version: "1.0"
+exclude:
+  - name: Exclude database files
+    paths:
+      - "data/history.db"

@@ -3,9 +3,10 @@ from aiogram.types import Message
 from aiogram.filters import Command
 from aiogram import F
 from datetime import datetime
-from services.json_manager import save_history
-from config import HISTORY_FILE_PATH
+# from services.json_manager import save_history
+# from config import HISTORY_FILE_PATH
 from services.ai_manager import get_ai_response
+from services.database import save_message
 
 user_router = Router()
 
@@ -28,14 +29,10 @@ async def cmd_help(message: Message):
 
 @user_router.message(F.text)
 async def process_echo(message: Message):
-    new_record = {
-        'user_id': message.from_user.id,
-        'text': message.text,
-        'timestamp': datetime.now().isoformat(),
-    }
-
-    save_history(HISTORY_FILE_PATH, new_record)
+    save_message(user_id=message.from_user.id, role='user', text=message.text, timestamp=datetime.now().isoformat()
+    )
 
     gpt_text = await get_ai_response(message.text)
+    save_message(gpt_text=message.from_user.id, role='assistant', text=message.text, timestamp=datetime.now().isoformat())
     await message.answer(gpt_text)
 

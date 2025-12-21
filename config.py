@@ -3,11 +3,14 @@ from dotenv import load_dotenv  #Импортируем из библиотек�
 
 load_dotenv()  # Функция автоматически находит и читает .env
 API_KEY = os.getenv('AI_API_KEY')
-LLM_API_URL = 'https://openrouter.ai/api/v1/chat/completions'
+LLM_API_URL = 'gpt://b1g1fqpv1lnjf3r0ctj0/yandexgpt-lite'
 TOKEN = os.getenv('BOT_TOKEN') # Найдет значение по имени и запомнит в переменную
 
 HISTORY_FILE_PATH = 'data/history.json'
 DATA_DIR = 'data'
+DB_PATH = os.path.join(DATA_DIR, 'history.db')
+if not os.path.exists(DATA_DIR):
+    os.makedirs(DATA_DIR)
 
 if __name__ == "__main__":
     print(f"Token: {'Found' if TOKEN else 'Not found'}")
