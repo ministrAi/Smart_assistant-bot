@@ -2,7 +2,7 @@ import  sqlite3
 from config import DB_PATH
 
 
-
+# Создаем таблицу
 def init_db():
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
@@ -15,7 +15,7 @@ def init_db():
         timestamp TEXT
     )
     """)
-    # Попытка добавить поле (если его ещё нет)
+    # Попытка добавить поле role (если его ещё нет)
     try:
         cursor.execute("""
         ALTER TABLE Messages ADD COLUMN role TEXT
@@ -28,13 +28,14 @@ def init_db():
     conn.commit()
     conn.close()
 
+# Вставляем данные в таблицу
 def save_message(user_id, role, text, timestamp):
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
 
     cursor.execute("""
     INSERT INTO Messages (user_id, role, text, timestamp)
-    VALUES (?, ?, ?)
+    VALUES (?, ?, ?, ?)
     """, (user_id, role, text, timestamp))
     conn.commit()
     conn.close()

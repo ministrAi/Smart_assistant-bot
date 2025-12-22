@@ -3,8 +3,6 @@ from aiogram.types import Message
 from aiogram.filters import Command
 from aiogram import F
 from datetime import datetime
-# from services.json_manager import save_history
-# from config import HISTORY_FILE_PATH
 from services.ai_manager import get_ai_response
 from services.database import save_message
 
@@ -33,6 +31,6 @@ async def process_echo(message: Message):
     )
 
     gpt_text = await get_ai_response(message.text)
-    save_message(gpt_text=message.from_user.id, role='assistant', text=message.text, timestamp=datetime.now().isoformat())
+    save_message(user_id=message.from_user.id, role='assistant', text=gpt_text, timestamp=datetime.now().isoformat())
     await message.answer(gpt_text)
 
