@@ -11,10 +11,11 @@ dp.include_router(user_router) # Подключаем обработчика к�
 
 
 async def main():
-
+    # Создаем таблицу Communication (Message) в начале
+    init_db()
     # Запускаем главную функцию и ОПРОС сервера Telegram на новые сообщения
-    init_db() # Создаем таблицу Communication (Message) в начале
     await dp.start_polling(bot)
+
 
 if __name__ == "__main__":
     # Запуск асинхронного приложения

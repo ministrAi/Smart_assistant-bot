@@ -7,7 +7,7 @@ API_KEY = os.getenv('AI_API_KEY')
 LLM_API_URL = 'https://llm.api.cloud.yandex.net/foundationModels/v1/completion'
 TOKEN = os.getenv('BOT_TOKEN') # Найдет значение по имени и запомнит в переменную
 
-HISTORY_FILE_PATH = 'data/history.json'
+# HISTORY_FILE_PATH = 'data/history.json'
 DATA_DIR = 'data'
 DB_PATH = os.path.join(DATA_DIR, 'history.db')
 if not os.path.exists(DATA_DIR):

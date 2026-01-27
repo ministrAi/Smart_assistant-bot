@@ -25,7 +25,11 @@ async def get_ai_response(history):
     # Открываем контекстный менеджер и создаем асинхронный http клиент
     async with httpx.AsyncClient() as client:
         # Отправляется POST‑запрос на API.
-        response = await client.post(LLM_API_URL, headers=headers, json=payload)
+        response = await client.post(
+            LLM_API_URL,
+            headers=headers,
+            json=payload
+        )
 
         if response.status_code == 429:
             return "⏳ Модель перегружена. Попробуйте через минуту."
