@@ -35,8 +35,18 @@ def save_message(user_id, role, text, timestamp):
     cursor.execute("""
     INSERT INTO Communication (user_id, role, text, timestamp)
     VALUES (?, ?, ?, ?)
-    """, (user_id, role, text, timestamp),
-    )
+    """, (user_id, role, text, timestamp))
+
+    cursor.execute("""
+            UPDATE Communication 
+            SET is_active = 0 
+            WHERE user_id = ? AND is_active = 1 AND id NOT IN (
+                  SELECT id FROM Communication 
+                  WHERE user_id = ? AND is_active = 1
+                  ORDER BY id DESC 
+                  LIMIT 40
+              )
+        """, (user_id, user_id))
 
     conn.commit()
     conn.close()
@@ -84,9 +94,8 @@ def delete_user_messages(user_id):
     cursor = conn.cursor()
 
     cursor.execute("""
-    UPDATE Communication
-    SET is_active = 0
-    WHERE user_id = ?  AND is_active = 1
+    DELETE FROM Communication
+    WHERE user_id = ?
     """, (user_id,))
 
     count = cursor.rowcount
@@ -149,8 +158,6 @@ def getting_statistics():
             "assistant_messages": assistant_messages
         }
     return receiving
-
-
 
 
 
