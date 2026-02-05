@@ -5,7 +5,7 @@ from aiogram import F
 from datetime import datetime
 from services.ai_manager import get_ai_response
 from services.database import save_message
-from services.database import get_conversation_history
+from services.database import get_conversation_history, delete_user_messages
 
 user_router = Router()
 
@@ -52,3 +52,17 @@ async def process_echo(message: Message):
     )
     # Отправка ответа пользователю
     await message.answer(gpt_text)
+
+
+@user_router.message(Command("clear"))
+async def cmd_clear(message: Message):
+    user_id = message.from_user.id
+
+    total_deleted = delete_user_messages(user_id)
+
+    if total_deleted > 0:
+        # Если в базе были записи с is_active = 1
+        await message.answer(f"🧹 История очищена! Скрыто записей: {total_deleted}")
+    else:
+        # Если записей не было или у всех уже стоит is_active = 0
+        await message.answer("Ваша история и так пуста или уже была очищена! ✨")
