@@ -8,7 +8,6 @@ from datetime import datetime
 app = FastAPI()
 
 # Получение сообщений
-# Декоратор, который регистрирует эндпоинт
 @app.get("/users/{user_id}/messages", summary="Получить историю сообщений")
 async def get_user_history(user_id: int, limit: int = 10):
 
@@ -65,21 +64,18 @@ async def delete_messages(user_id: int):
 # Получение списка пользователей
 @app.get("/users", summary="Получить список всех пользователей")
 async def list_users():
-    lists_users = get_all_users(user_id=list_users)
+    lists_users = get_all_users()
     return {
         "count": len(lists_users),
         "users": lists_users,
     }
 
 
-
+# Получение статистики по базе данных
 @app.get("/stats", summary="Получить статистику по базе данных")
 async def statistics():
     stats = getting_statistics()
     return stats
-
-
-# Привет
 
 
 

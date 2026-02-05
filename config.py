@@ -6,6 +6,7 @@ FOLDER_KEY = os.getenv('FOLDER_ID')
 API_KEY = os.getenv('AI_API_KEY')
 LLM_API_URL = 'https://llm.api.cloud.yandex.net/foundationModels/v1/completion'
 TOKEN = os.getenv('BOT_TOKEN') # Найдет значение по имени и запомнит в переменную
+MAX_ACTIVE_MESSAGES = 40
 
 # HISTORY_FILE_PATH = 'data/history.json'
 DATA_DIR = 'data'

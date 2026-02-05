@@ -1,5 +1,6 @@
 import  sqlite3
 from config import DB_PATH
+# from config import MAX_ACTIVE_MESSAGES
 
 
 # Создаем таблицу
@@ -28,9 +29,10 @@ def init_db():
 
 # Сохраняем сообщения в таблицу
 def save_message(user_id, role, text, timestamp):
+    if not isinstance(timestamp, str):
+        timestamp = timestamp.isoformat()
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
-
 
     cursor.execute("""
     INSERT INTO Communication (user_id, role, text, timestamp)
@@ -88,6 +90,8 @@ def get_conversation_history(user_id, limit=40):
 
                                             # __API__
 
+
+
 # Удаление смс из БД
 def delete_user_messages(user_id):
     conn = sqlite3.connect(DB_PATH)
@@ -106,7 +110,7 @@ def delete_user_messages(user_id):
 
 
 # Список пользователей
-def get_all_users(user_id):
+def get_all_users():
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
 
@@ -152,10 +156,10 @@ def getting_statistics():
     conn.close()
 
     receiving = {
-            "total_messages": total_message,
-            "total_users": total_users,
-            "user_messages": user_messages,
-            "assistant_messages": assistant_messages
+            "total_messages": total_message,            # Общее кол-во смс
+            "total_users": total_users,                 # Кол-во уникальных юзеров
+            "user_messages": user_messages,             # Кол-во смс юзера
+            "assistant_messages": assistant_messages    # Кол-во смс ассистента
         }
     return receiving
 
