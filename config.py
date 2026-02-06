@@ -9,7 +9,7 @@ TOKEN = os.getenv('BOT_TOKEN') # Найдет значение по имени �
 MAX_ACTIVE_MESSAGES = 40
 
 # HISTORY_FILE_PATH = 'data/history.json'
-DATA_DIR = 'data'
+DATA_DIR = os.getenv('DATA_DIR', 'data')
 DB_PATH = os.path.join(DATA_DIR, 'history.db')
 if not os.path.exists(DATA_DIR):
     os.makedirs(DATA_DIR)
