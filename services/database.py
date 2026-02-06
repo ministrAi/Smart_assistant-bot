@@ -63,7 +63,10 @@ def get_conversation_history(user_id, limit=40):
 
     cursor.execute("""
     SELECT role, text FROM Communication 
-    WHERE user_id = ? AND role IS NOT NULL AND role IN ('user', 'assistant') AND is_active = 1
+    WHERE user_id = ? 
+      AND role IS NOT NULL 
+      AND role IN ('user', 'assistant') 
+      AND is_active = 1
     ORDER BY id ASC 
     LIMIT ?
     """, (user_id, limit,))
