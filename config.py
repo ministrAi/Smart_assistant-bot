@@ -11,7 +11,10 @@ MAX_ACTIVE_MESSAGES = 40
 DATA_DIR = os.getenv('DATA_DIR', 'data')
 DB_PATH = os.path.join(DATA_DIR, 'history.db')
 if not os.path.exists(DATA_DIR):
-    os.makedirs(DATA_DIR)
+    try:
+        os.makedirs(DATA_DIR)
+    except PermissionError:
+        pass
 
 if __name__ == "__main__":
     print(f"Token: {'Found' if TOKEN else 'Not found'}")
