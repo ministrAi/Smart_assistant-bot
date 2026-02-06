@@ -13,8 +13,16 @@ DB_PATH = os.path.join(DATA_DIR, 'history.db')
 if not os.path.exists(DATA_DIR):
     try:
         os.makedirs(DATA_DIR)
+        print(f"✅ Папка {DATA_DIR} успешно создана")
     except PermissionError:
-        pass
+        # Если нет прав - возможно, это примонтированный диск
+        # Проверяем, доступна ли папка для записи
+        print(f"⚠️ Нет прав на создание {DATA_DIR}, но папка может быть примонтирована")
+        if not os.path.exists(DATA_DIR):
+            # Если папки всё равно нет - откатываемся на локальную
+            print(f"❌ Папка {DATA_DIR} недоступна, используем './data'")
+            DATA_DIR = 'data'
+            DB_PATH = os.path.join(DATA_DIR, 'hist
 
 if __name__ == "__main__":
     print(f"Token: {'Found' if TOKEN else 'Not found'}")
