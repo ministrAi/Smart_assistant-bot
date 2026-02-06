@@ -22,7 +22,8 @@ if not os.path.exists(DATA_DIR):
             # Если папки всё равно нет - откатываемся на локальную
             print(f"❌ Папка {DATA_DIR} недоступна, используем './data'")
             DATA_DIR = 'data'
-            DB_PATH = os.path.join(DATA_DIR, 'hist
+            DB_PATH = os.path.join(DATA_DIR, 'history.db')
+            os.makedirs(DATA_DIR, exist_ok=True)
 
 if __name__ == "__main__":
     print(f"Token: {'Found' if TOKEN else 'Not found'}")
