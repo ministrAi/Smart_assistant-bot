@@ -1,17 +1,19 @@
-import  sqlite3
-from config import DB_PATH
+# import  sqlite3
+import psycopg2
+# from config import DB_PATH
+from config import DATABASE_URL
 # from config import MAX_ACTIVE_MESSAGES
 
 
 # Создаем таблицу
 def init_db():
-    conn = sqlite3.connect(DB_PATH)
+    conn = psycopg2.connect(DATABASE_URL)
     cursor = conn.cursor()
 
     # Создаем таблицу Message если ее нет
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS Communication (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        id SERIAL PRIMARY KEY ,
         user_id INTEGER,
         text TEXT,
         timestamp TEXT,
@@ -31,20 +33,21 @@ def init_db():
 def save_message(user_id, role, text, timestamp):
     if not isinstance(timestamp, str):
         timestamp = timestamp.isoformat()
-    conn = sqlite3.connect(DB_PATH)
+
+    conn = psycopg2.connect(DATABASE_URL)
     cursor = conn.cursor()
 
     cursor.execute("""
     INSERT INTO Communication (user_id, role, text, timestamp)
-    VALUES (?, ?, ?, ?)
+    VALUES (%s, %s, %s, %s)
     """, (user_id, role, text, timestamp))
 
     cursor.execute("""
             UPDATE Communication 
             SET is_active = 0 
-            WHERE user_id = ? AND is_active = 1 AND id NOT IN (
+            WHERE user_id = %s AND is_active = 1 AND id NOT IN (
                   SELECT id FROM Communication 
-                  WHERE user_id = ? AND is_active = 1
+                  WHERE user_id = %s AND is_active = 1
                   ORDER BY id DESC 
                   LIMIT 40
               )
@@ -57,18 +60,18 @@ def save_message(user_id, role, text, timestamp):
 
 # Получаем диалог
 def get_conversation_history(user_id, limit=40):
-    conn = sqlite3.connect(DB_PATH)
+    conn = psycopg2.connect(DATABASE_URL)
     cursor = conn.cursor()
 
 
     cursor.execute("""
     SELECT role, text FROM Communication 
-    WHERE user_id = ? 
+    WHERE user_id = %s 
       AND role IS NOT NULL 
       AND role IN ('user', 'assistant') 
       AND is_active = 1
-    ORDER BY id ASC 
-    LIMIT ?
+    ORDER BY id
+    LIMIT %s
     """, (user_id, limit,))
 
     message_list = []
@@ -97,12 +100,12 @@ def get_conversation_history(user_id, limit=40):
 
 # Удаление смс из БД
 def delete_user_messages(user_id):
-    conn = sqlite3.connect(DB_PATH)
+    conn = psycopg2.connect(DATABASE_URL)
     cursor = conn.cursor()
 
     cursor.execute("""
     DELETE FROM Communication
-    WHERE user_id = ?
+    WHERE user_id = %s
     """, (user_id,))
 
     count = cursor.rowcount
@@ -114,7 +117,7 @@ def delete_user_messages(user_id):
 
 # Список пользователей
 def get_all_users():
-    conn = sqlite3.connect(DB_PATH)
+    conn = psycopg2.connect(DATABASE_URL)
     cursor = conn.cursor()
 
     cursor.execute("""
@@ -131,7 +134,7 @@ def get_all_users():
 
 # Отображение статистики
 def getting_statistics():
-    conn = sqlite3.connect(DB_PATH)
+    conn = psycopg2.connect(DATABASE_URL)
     cursor = conn.cursor()
 
     cursor.execute("""
