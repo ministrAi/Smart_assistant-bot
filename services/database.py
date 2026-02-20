@@ -31,6 +31,7 @@ def init_db():
 
 # Сохраняем сообщения в таблицу
 def save_message(user_id, role, text, timestamp):
+    print(f"🔵 Сохраняю: user={user_id}, role={role}, text={text[:20]}...")
     if not isinstance(timestamp, str):
         timestamp = timestamp.isoformat()
 
