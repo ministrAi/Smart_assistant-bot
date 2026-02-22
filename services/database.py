@@ -1,13 +1,10 @@
-# import  sqlite3
 import psycopg2
-# from config import DB_PATH
-from config import DATABASE_URL
-# from config import MAX_ACTIVE_MESSAGES
+import config
 
 
 # Создаем таблицу
 def init_db():
-    conn = psycopg2.connect(DATABASE_URL)
+    conn = psycopg2.connect(config.DATABASE_URL)
     cursor = conn.cursor()
 
     # Создаем таблицу Message если ее нет
@@ -35,7 +32,7 @@ def save_message(user_id, role, text, timestamp):
     if not isinstance(timestamp, str):
         timestamp = timestamp.isoformat()
 
-    conn = psycopg2.connect(DATABASE_URL)
+    conn = psycopg2.connect(config.DATABASE_URL)
     cursor = conn.cursor()
 
     cursor.execute("""
@@ -50,9 +47,9 @@ def save_message(user_id, role, text, timestamp):
                   SELECT id FROM Communication 
                   WHERE user_id = %s AND is_active = 1
                   ORDER BY id DESC 
-                  LIMIT 40
+                  LIMIT %s
               )
-        """, (user_id, user_id))
+        """, (user_id, user_id, config.MAX_ACTIVE_MESSAGES))
 
     conn.commit()
     conn.close()
@@ -60,8 +57,8 @@ def save_message(user_id, role, text, timestamp):
 
 
 # Получаем диалог
-def get_conversation_history(user_id, limit=40):
-    conn = psycopg2.connect(DATABASE_URL)
+def get_conversation_history(user_id, limit=config.MAX_ACTIVE_MESSAGES):
+    conn = psycopg2.connect(config.DATABASE_URL)
     cursor = conn.cursor()
 
 
@@ -101,7 +98,7 @@ def get_conversation_history(user_id, limit=40):
 
 # Удаление смс из БД
 def delete_user_messages(user_id):
-    conn = psycopg2.connect(DATABASE_URL)
+    conn = psycopg2.connect(config.DATABASE_URL)
     cursor = conn.cursor()
 
     cursor.execute("""
@@ -118,7 +115,7 @@ def delete_user_messages(user_id):
 
 # Список пользователей
 def get_all_users():
-    conn = psycopg2.connect(DATABASE_URL)
+    conn = psycopg2.connect(config.DATABASE_URL)
     cursor = conn.cursor()
 
     cursor.execute("""
@@ -135,7 +132,7 @@ def get_all_users():
 
 # Отображение статистики
 def getting_statistics():
-    conn = psycopg2.connect(DATABASE_URL)
+    conn = psycopg2.connect(config.DATABASE_URL)
     cursor = conn.cursor()
 
     cursor.execute("""

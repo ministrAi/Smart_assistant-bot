@@ -1,22 +1,20 @@
 import psycopg2
 import pytest
-
 from config import TEST_DB_URL
-from services.database import init_db
+import config
+# from services.database import init_db
+
 
 @pytest.fixture
 def test_db(monkeypatch):
-    # test_db_dir = tmp_path / "data" # Создаем путь
-    # test_db_dir.mkdir() # Физически создаем пустую папку
-    # test_db_path = test_db_dir / "test_history.db" # Определяем путь к тестовой БД
-    # Подменяем настоящую БД на тестовую
-    monkeypatch.setattr("config.DATABASE_URL", str(TEST_DB_URL))
+    monkeypatch.setattr(config, "DATABASE_URL", TEST_DB_URL)
+    from services.database import init_db  # импорт ПОСЛЕ подмены
     init_db()
+    yield  # здесь выполняются тесты
 
-    yield # Возвращаем путь в тест
-
+    # Очищаем тестовую БД после тестов
     conn = psycopg2.connect(TEST_DB_URL)
     cursor = conn.cursor()
-    cursor.execute("TRUNCATE TABLE Communication")
+    cursor.execute("TRUNCATE TABLE Communication RESTART IDENTITY CASCADE ")
     conn.commit()
     conn.close()
