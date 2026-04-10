@@ -1,5 +1,5 @@
 import httpx
-from config import API_KEY, LLM_API_URL, FOLDER_KEY
+from config import API_KEY, LLM_API_URL
 
 async def get_ai_response(history):
 
@@ -11,14 +11,11 @@ async def get_ai_response(history):
     }
     # Подготовка тела запроса
     payload = {
-        "modelUri": f"gpt://{FOLDER_KEY}/yandexgpt-lite",
-        "completionOptions": {
-            "stream": False,
-            "temperature": 0.6,
-            "maxTokens": 1000
-        },
-
-        "messages": history
+        "model": "nvidia/nemotron-3-nano-30b-a3b:free",
+        "messages": history,
+        "temperature": 0.4,
+        "max_tokens": 1000,
+        "reasoning": {"enabled": True},
     }
 
 
