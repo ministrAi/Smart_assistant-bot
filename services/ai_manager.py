@@ -47,7 +47,7 @@ async def get_ai_response(history):
 
     try:
         # Это типовой путь для извлечения текста для большинства LLM-моделей
-        ai_text = response_data['result']['alternatives'][0]['message']['text']
+        ai_text = response_data['choices'][0]['message']['content']
 
         if not ai_text or ai_text.strip() == "":
             return "🤔 AI не смог сформировать ответ. Попробуйте переформулировать вопрос."
