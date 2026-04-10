@@ -96,17 +96,18 @@ def get_conversation_history(user_id, limit=config.MAX_ACTIVE_MESSAGES):
 
 
 
-# Удаление смс из БД
+# Мягкое удаление смс из БД
 def delete_user_messages(user_id):
     conn = psycopg2.connect(config.DATABASE_URL)
     cursor = conn.cursor()
 
     cursor.execute("""
-    DELETE FROM Communication
-    WHERE user_id = %s
+    UPDATE Communication
+    SET is_active = 0
+    WHERE user_id = %s AND is_active = 1
     """, (user_id,))
 
-    count = cursor.rowcount
+    count = cursor.rowcount  # кол-во строк которые реально изменились
     conn.commit()
     conn.close()
     return count
