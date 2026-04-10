@@ -11,7 +11,7 @@ async def get_ai_response(history):
     }
     # Подготовка тела запроса
     payload = {
-        "model": "nvidia/nemotron-3-nano-30b-a3b:free",
+        "model": "z-ai/glm-4.5-air:free",
         "messages": history,
         "temperature": 0.4,
         "max_tokens": 1000,
