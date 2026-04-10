@@ -9,13 +9,26 @@ async def get_ai_response(history):
         # 2. Аутентификация: Bearer — это стандартный префикс для ключей API
         "Authorization": f'Bearer {API_KEY}',
     }
-    # Подготовка тела запроса
+    # Добавляем системную инструкцию в начало списка сообщений
+    system_prompt = {
+        "role": "system",
+        "content": (
+            "Ты — профессиональный ИИ-ассистент. Оформляй ответы для Telegram красиво:\n"
+            "1. Используй **жирный шрифт** для заголовков и важных терминов.\n"
+            "2. Вместо таблиц делай маркированные списки с эмодзи.\n"
+            "3. Разделяй блоки текста пустой строкой.\n"
+            "4. Пиши кратко и по существу."
+        )
+    }
+
+    # Объединяем системную роль и историю
+    full_messages = [system_prompt] + history
+
     payload = {
         "model": "z-ai/glm-4.5-air:free",
-        "messages": history,
+        "messages": full_messages,
         "temperature": 0.4,
-        "max_tokens": 1000,
-        "reasoning": {"enabled": True},
+        "max_tokens": 1000
     }
 
 

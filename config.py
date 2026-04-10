@@ -3,10 +3,6 @@ from dotenv import load_dotenv  #Импортируем из библиотек�
 
 load_dotenv()  # Функция автоматически находит и читает .env
 FOLDER_KEY = os.getenv('FOLDER_ID')
-
-# API_KEY = os.getenv('AI_API_KEY')
-# LLM_API_URL = 'https://llm.api.cloud.yandex.net/foundationModels/v1/completion'
-
 API_KEY = os.getenv('OPENROUTER_API_KEY')
 LLM_API_URL = 'https://openrouter.ai/api/v1/chat/completions'
 

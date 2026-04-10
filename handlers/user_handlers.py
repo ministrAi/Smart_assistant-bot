@@ -64,6 +64,6 @@ async def process_echo(message: Message):
         timestamp=datetime.now().isoformat()
     )
     # Отправка ответа пользователю
-    await message.answer(gpt_text)
+    await message.answer(gpt_text, parse_mode="Markdown")
 
 
