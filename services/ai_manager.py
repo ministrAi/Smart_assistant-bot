@@ -46,7 +46,7 @@ async def get_ai_response(history):
     full_messages = [system_prompt] + history
 
     payload = {
-        "model": "google/gemini-2.0-flash-lite-preview-02-05:free",
+        "model": "nvidia/nemotron-3-nano-30b-a3b:free",
         "messages": full_messages,
         "temperature": 0.4,
         "max_tokens": 1000
