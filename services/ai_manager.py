@@ -1,4 +1,5 @@
 from config import API_KEY, LLM_API_URL
+import httpx
 from models import get_best_model_response
 
 async def get_ai_response(history):

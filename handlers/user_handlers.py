@@ -32,54 +32,23 @@ async def cmd_help(message: Message):
 @user_router.message(Command("clear"))
 async def cmd_clear(message: Message):
     user_id = message.from_user.id
-
     total_deleted = delete_user_messages(user_id)
 
     if total_deleted > 0:
-        # Если в базе были записи с is_active = 1
         await message.answer(f"🧹 История очищена! Скрыто записей: {total_deleted}")
     else:
-        # Если записей не было или у всех уже стоит is_active = 0
         await message.answer("Ваша история и так пуста или уже была очищена! ✨")
+
 
 @user_router.message(F.text)
 async def process_echo(message: Message):
-    # Сохраняем сообщение пользователя
-    # save_message(
-    #     user_id=message.from_user.id,
-    #     role='user',
-    #     text=message.text,
-    #     timestamp=datetime.now().isoformat()
-    # )
-    #
-    # #  Получаем историю сообщений пользователя по id
-    # history = get_conversation_history(message.from_user.id)
-    # # Отправляем историю диалога в YaGPT и сохраняем ответ в переменную
-    # gpt_text = await get_ai_response(history)
-    #
-    # try:
-    #     # Основная попытка с MarkdownV2
-    #     await message.answer(gpt_text, parse_mode="MarkdownV2")
-    # except Exception as e:
-    #     # Если разметка сломалась, отправляем чистый текст
-    #     print(f"⚠️ Ошибка разметки MarkdownV2: {e}")
-    #     # Можно добавить пояснение для отладки, если хотите:
-    #     # await message.answer("*(Ошибка разметки исправлена)*", parse_mode="MarkdownV2")
-    #     await message.answer(gpt_text)
-    #
-    # #  Сохраняем ответ AI
-    # save_message(
-    #     user_id=message.from_user.id,
-    #     role='assistant',
-    #     text=gpt_text,
-    #     timestamp=datetime.now().isoformat()
-    # )
+    user_id = message.from_user.id
 
     try:
         # 1. Сохраняем сообщение пользователя
-        print("💾 Сохраняю сообщение пользователя в БД...")
+        print(f"💾 Сохраняю сообщение от user={user_id}")
         save_message(
-            user_id=message.from_user.id,
+            user_id=user_id,
             role='user',
             text=message.text,
             timestamp=datetime.now().isoformat()
@@ -88,13 +57,14 @@ async def process_echo(message: Message):
 
         # 2. Получаем историю
         print("📚 Получаю историю диалога...")
-        history = get_conversation_history(message.from_user.id)
+        history = get_conversation_history(user_id)
         print(f"📊 Получено {len(history)} сообщений из истории")
 
         # 3. Запрос к AI
         print("🤖 Отправляю запрос к AI...")
         gpt_text = await get_ai_response(history)
-        print(f"📝 Получен ответ от AI длиной {len(gpt_text)} символов")
+        print(f"📝 Получен ответ от AI длиной {len(gpt_text) if gpt_text else 0} символов")
+        print(f"📝 Текст ответа: {gpt_text[:100] if gpt_text else 'None'}...")
 
         # 4. Отправка ответа
         try:
@@ -114,7 +84,7 @@ async def process_echo(message: Message):
         # 5. Сохраняем ответ AI
         print("💾 Сохраняю ответ AI в БД...")
         save_message(
-            user_id=message.from_user.id,
+            user_id=user_id,
             role='assistant',
             text=gpt_text,
             timestamp=datetime.now().isoformat()
@@ -126,11 +96,7 @@ async def process_echo(message: Message):
         import traceback
         traceback.print_exc()
 
-        # Пытаемся отправить хоть что-то пользователю
-        try:
-            await message.answer("Произошла внутренняя ошибка. Пожалуйста, попробуйте позже.")
-        except:
-            pass
-
+        # Отправляем сообщение об ошибке
+        await message.answer("Произошла внутренняя ошибка. Пожалуйста, попробуйте позже.")
 
 
