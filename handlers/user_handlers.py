@@ -81,16 +81,19 @@ async def process_echo(message: Message):
         gpt_text = await get_ai_response(history)
         print(f"📝 Получен ответ от AI длиной {len(gpt_text) if gpt_text else 0} символов")
 
-        # 4. Отправка ответа с HTML разметкой
+        # 4. Отправка ответа
         try:
-            # Пытаемся отправить с MarkdownV2
-            await message.answer(gpt_text, parse_mode="MarkdownV2")
-        except Exception as e:
-            # Если разметка всё равно "кривая" — отправляем как есть, без форматирования
-            print(f"⚠️ Ошибка MarkdownV2: {e}")
-            # Очищаем текст от символов разметки, чтобы он выглядел просто как текст
-            clean_text = gpt_text.replace('*', '').replace('_', '').replace('\\', '')
+            # Теперь используем HTML
+            await message.answer(gpt_text, parse_mode="HTML")
+            print("✅ Ответ отправлен успешно (HTML)")
+
+        except Exception as html_error:
+            print(f"⚠️ Ошибка HTML разметки: {html_error}")
+            # Если теги все же сломаны, чистим их и отправляем как текст
+            import re
+            clean_text = re.sub('<[^<]+?>', '', gpt_text)
             await message.answer(clean_text)
+            print("✅ Ответ отправлен (очищенный от тегов)")
 
         # 5. Сохраняем ответ AI
         print("💾 Сохраняю ответ AI в БД...")
