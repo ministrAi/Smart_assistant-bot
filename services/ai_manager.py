@@ -1,5 +1,5 @@
-import httpx
 from config import API_KEY, LLM_API_URL
+from models import get_best_model_response
 
 async def get_ai_response(history):
 
@@ -21,7 +21,7 @@ async def get_ai_response(history):
             "- Короткие абзацы\n"
             "- Используй Markdown для форматирования текста (жирный шрифт, списки).\n"
             "- Логичное объяснение шаг за шагом\n\n"
-    
+
             "ФОРМАТ TELEGRAM:\n"
             "- Разделяй текст пустыми строками\n"
             "- Используй эмодзи умеренно (🔹 💡 ⚙️)\n\n"
@@ -31,11 +31,11 @@ async def get_ai_response(history):
             "- ВАЖНО: Никогда не используй символы [ ] ( ) ~ # + - = | { } . ! без необходимости.\n"
             "- Если используешь их, ПЕРЕД НИМИ ВСЕГДА ставь обратный слэш, например: 1\. Шаг или Привет\!\n"
             "- Не используй таблицы, только списки через дефис или цифры (с экранированной точкой).\n"
-    
+
             "ПОВЕДЕНИЕ:\n"
             "- Объясняй как наставник, а не как учебник\n"
             "- Сначала краткий ответ, затем пояснение\n\n"
-    
+
             "ПРИМЕР СТИЛЯ:\n"
             "Сэр, различие заключается в следующем...\n"
             "Позвольте пояснить...\n"
@@ -45,49 +45,23 @@ async def get_ai_response(history):
     # Объединяем системную роль и историю
     full_messages = [system_prompt] + history
 
-    payload = {
-        "model": "google/gemma-4-31b-it:free",
-        "messages": full_messages,
-        "temperature": 0.4,
-        "max_tokens": 1000
-    }
+    # === НОВОЕ: Используем автоматический выбор модели ===
+    response_data = await get_best_model_response(full_messages, headers)
 
-
-    # Открываем контекстный менеджер и создаем асинхронный http клиент
-    async with httpx.AsyncClient() as client:
-        # Отправляется POST‑запрос на API.
-        response = await client.post(
-            LLM_API_URL,
-            headers=headers,
-            json=payload
-        )
-
-        if response.status_code == 429:
-            return "⏳ Модель перегружена. Попробуйте через минуту."
-
-        if response.status_code == 500:
-            return "Ошибка на сервере, попробуйте позже."
-
-        if response.status_code != 200:
-            print(f"Ошибка API. Статус: {response.status_code}, Ответ: {response.text}")
-            return "Произошла ошибка при обращении к ИИ."
-
-        # Преобразовываем текст ответа в словарь Python
-        response_data = response.json()
-
-        # Выводим текст ответа в консоль для отладки
-        print(response_data)
-
+    if response_data is None:
+        return "⏳ Все ИИ-модели временно перегружены. Попробуйте через минуту."
+    # ===================================================
 
     try:
-        # Это типовой путь для извлечения текста для большинства LLM-моделей
+        # Извлекаем текст ответа
         ai_text = response_data['choices'][0]['message']['content']
 
         if not ai_text or ai_text.strip() == "":
             return "🤔 AI не смог сформировать ответ. Попробуйте переформулировать вопрос."
 
-        return ai_text  # Возвращаем чистый текст
+        return ai_text
 
     except (KeyError, IndexError):
         # Ловим ошибку, если структура ответа неожиданная
+        print(f"⚠️ Неожиданная структура ответа: {response_data}")
         return "ИИ вернул неверный формат ответа."

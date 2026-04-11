@@ -11,5 +11,7 @@ MAX_ACTIVE_MESSAGES = 400
 DATABASE_URL = os.getenv('DATABASE_URL')
 TEST_DB_URL = os.getenv('TEST_DB_URL')
 
+DEFAULT_MODEL = "google/gemma-4-31b-it:free"  # Основная модель
+
 if __name__ == "__main__":
     print(f"Token: {'Found' if TOKEN else 'Not found'}")
