@@ -6,8 +6,7 @@ from datetime import datetime
 from services.ai_manager import get_ai_response
 from services.database import save_message
 from services.database import get_conversation_history, delete_user_messages
-from aiogram.utils.text_decorations import markdown_decoration
-from aiogram.utils.markdown import hide_link
+from utils.text_utils import escape_markdown_v2
 
 user_router = Router()
 
@@ -59,13 +58,14 @@ async def process_echo(message: Message):
     gpt_text = await get_ai_response(history)
 
     try:
-        # Основная попытка с MarkdownV2
-        await message.answer(gpt_text, parse_mode="MarkdownV2")
+        # 1. Экранируем ВЕСЬ текст перед отправкой с parse_mode
+        safe_text = escape_markdown_v2(gpt_text)
+
+        await message.answer(safe_text, parse_mode="MarkdownV2")
+
     except Exception as e:
-        # Если разметка сломалась, отправляем чистый текст
         print(f"⚠️ Ошибка разметки MarkdownV2: {e}")
-        # Можно добавить пояснение для отладки, если хотите:
-        # await message.answer("*(Ошибка разметки исправлена)*", parse_mode="MarkdownV2")
+        # На всякий случай отправляем оригинал без форматирования
         await message.answer(gpt_text)
 
     #  Сохраняем ответ AI
@@ -75,6 +75,6 @@ async def process_echo(message: Message):
         text=gpt_text,
         timestamp=datetime.now().isoformat()
     )
-    # Отправка ответа пользователю
+
 
 
