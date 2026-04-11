@@ -81,7 +81,7 @@ def get_conversation_history(user_id, limit=config.MAX_ACTIVE_MESSAGES):
         if text and text.strip():  # если текст не пустой
             message_list.append({
                 "role": role,
-                "content": "Ответь строго в стиле Джарвиса, без таблиц: " + text
+                "content": text
             })
 
     # .commit не нужен т.к. ничего не изменяем
