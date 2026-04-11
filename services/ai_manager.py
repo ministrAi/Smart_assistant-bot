@@ -46,7 +46,7 @@ async def get_ai_response(history):
     full_messages = [system_prompt] + history
 
     payload = {
-        "model": "z-ai/glm-4.5-air:free",
+        "model": "google/gemini-2.0-flash-lite-preview-02-05:free",
         "messages": full_messages,
         "temperature": 0.4,
         "max_tokens": 1000
