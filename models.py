@@ -4,8 +4,8 @@ from config import API_KEY, LLM_API_URL
 
 # Список моделей в порядке приоритета
 MODEL_LIST = [
+    "google/gemma-4-31b-it:free",  # 2. Умная
     "nvidia/nemotron-3-nano-30b-a3b:free",  # 1. Быстрая
-    "google/gemma-4-31b-it:free",  # 2. Умная (у вас уже работает)
     "qwen/qwen3-6b-plus:free",  # 3. Баланс
     "meta-llama/llama-3.2-3b-instruct:free",  # 4. Стабильная
     "google/gemini-2.0-flash-lite-preview-02-05:free"  # 5. Резерв
@@ -17,7 +17,7 @@ async def try_single_model(model_id, full_messages, headers):
     payload = {
         "model": model_id,
         "messages": full_messages,
-        "temperature": 0.4,
+        "temperature": 0.5,
         "max_tokens": 1000
     }
 
