@@ -7,7 +7,7 @@ API_KEY = os.getenv('OPENROUTER_API_KEY')
 LLM_API_URL = 'https://openrouter.ai/api/v1/chat/completions'
 
 TOKEN = os.getenv('BOT_TOKEN') # Найдет значение по имени и запомнит в переменную
-MAX_ACTIVE_MESSAGES = 400
+MAX_ACTIVE_MESSAGES = 30
 DATABASE_URL = os.getenv('DATABASE_URL')
 TEST_DB_URL = os.getenv('TEST_DB_URL')
 
