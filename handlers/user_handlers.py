@@ -45,36 +45,92 @@ async def cmd_clear(message: Message):
 @user_router.message(F.text)
 async def process_echo(message: Message):
     # Сохраняем сообщение пользователя
-    save_message(
-        user_id=message.from_user.id,
-        role='user',
-        text=message.text,
-        timestamp=datetime.now().isoformat()
-    )
-
-    #  Получаем историю сообщений пользователя по id
-    history = get_conversation_history(message.from_user.id)
-    # Отправляем историю диалога в YaGPT и сохраняем ответ в переменную
-    gpt_text = await get_ai_response(history)
+    # save_message(
+    #     user_id=message.from_user.id,
+    #     role='user',
+    #     text=message.text,
+    #     timestamp=datetime.now().isoformat()
+    # )
+    #
+    # #  Получаем историю сообщений пользователя по id
+    # history = get_conversation_history(message.from_user.id)
+    # # Отправляем историю диалога в YaGPT и сохраняем ответ в переменную
+    # gpt_text = await get_ai_response(history)
+    #
+    # try:
+    #     # Основная попытка с MarkdownV2
+    #     await message.answer(gpt_text, parse_mode="MarkdownV2")
+    # except Exception as e:
+    #     # Если разметка сломалась, отправляем чистый текст
+    #     print(f"⚠️ Ошибка разметки MarkdownV2: {e}")
+    #     # Можно добавить пояснение для отладки, если хотите:
+    #     # await message.answer("*(Ошибка разметки исправлена)*", parse_mode="MarkdownV2")
+    #     await message.answer(gpt_text)
+    #
+    # #  Сохраняем ответ AI
+    # save_message(
+    #     user_id=message.from_user.id,
+    #     role='assistant',
+    #     text=gpt_text,
+    #     timestamp=datetime.now().isoformat()
+    # )
 
     try:
-        # 1. Экранируем ВЕСЬ текст перед отправкой с parse_mode
-        safe_text = escape_markdown_v2(gpt_text)
+        # 1. Сохраняем сообщение пользователя
+        print("💾 Сохраняю сообщение пользователя в БД...")
+        save_message(
+            user_id=message.from_user.id,
+            role='user',
+            text=message.text,
+            timestamp=datetime.now().isoformat()
+        )
+        print("✅ Сообщение пользователя сохранено")
 
-        await message.answer(safe_text, parse_mode="MarkdownV2")
+        # 2. Получаем историю
+        print("📚 Получаю историю диалога...")
+        history = get_conversation_history(message.from_user.id)
+        print(f"📊 Получено {len(history)} сообщений из истории")
+
+        # 3. Запрос к AI
+        print("🤖 Отправляю запрос к AI...")
+        gpt_text = await get_ai_response(history)
+        print(f"📝 Получен ответ от AI длиной {len(gpt_text)} символов")
+
+        # 4. Отправка ответа
+        try:
+            print("🔧 Экранирую текст для MarkdownV2...")
+            safe_text = escape_markdown_v2(gpt_text)
+            print(f"📤 Отправляю ответ пользователю (с форматированием)...")
+
+            await message.answer(safe_text, parse_mode="MarkdownV2")
+            print("✅ Ответ отправлен успешно")
+
+        except Exception as markdown_error:
+            print(f"⚠️ Ошибка Markdown: {markdown_error}")
+            print("📤 Отправляю ответ без форматирования...")
+            await message.answer(gpt_text)
+            print("✅ Ответ отправлен (без форматирования)")
+
+        # 5. Сохраняем ответ AI
+        print("💾 Сохраняю ответ AI в БД...")
+        save_message(
+            user_id=message.from_user.id,
+            role='assistant',
+            text=gpt_text,
+            timestamp=datetime.now().isoformat()
+        )
+        print("✅ Ответ AI сохранен")
 
     except Exception as e:
-        print(f"⚠️ Ошибка разметки MarkdownV2: {e}")
-        # На всякий случай отправляем оригинал без форматирования
-        await message.answer(gpt_text)
+        print(f"❌ КРИТИЧЕСКАЯ ОШИБКА: {type(e).__name__}: {e}")
+        import traceback
+        traceback.print_exc()
 
-    #  Сохраняем ответ AI
-    save_message(
-        user_id=message.from_user.id,
-        role='assistant',
-        text=gpt_text,
-        timestamp=datetime.now().isoformat()
-    )
+        # Пытаемся отправить хоть что-то пользователю
+        try:
+            await message.answer("Произошла внутренняя ошибка. Пожалуйста, попробуйте позже.")
+        except:
+            pass
 
 
 
