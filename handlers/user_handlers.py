@@ -6,7 +6,6 @@ from datetime import datetime
 from services.ai_manager import get_ai_response
 from services.database import save_message
 from services.database import get_conversation_history, delete_user_messages
-from utils.markdown_to_html import markdown_to_html  # <-- Добавлен импорт
 
 user_router = Router()
 
@@ -82,12 +81,9 @@ async def process_echo(message: Message):
         gpt_text = await get_ai_response(history)
         print(f"📝 Получен ответ от AI длиной {len(gpt_text) if gpt_text else 0} символов")
 
-        # 4. КОНВЕРТИРУЕМ Markdown в HTML
-        html_text = markdown_to_html(gpt_text)
-
-        # 5. Отправка ответа с HTML разметкой
+        # 4. Отправка ответа с HTML разметкой
         try:
-            await message.answer(html_text, parse_mode="HTML")
+            await message.answer(gpt_text, parse_mode="HTML")
             print("✅ Ответ отправлен успешно (HTML)")
 
         except Exception as html_error:
@@ -96,7 +92,7 @@ async def process_echo(message: Message):
             await message.answer(gpt_text)
             print("✅ Ответ отправлен (без форматирования)")
 
-        # 6. Сохраняем ответ AI (оригинальный текст)
+        # 5. Сохраняем ответ AI
         print("💾 Сохраняю ответ AI в БД...")
         save_message(
             user_id=user_id,
