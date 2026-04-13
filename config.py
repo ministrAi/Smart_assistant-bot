@@ -4,7 +4,7 @@ from dotenv import load_dotenv  #Импортируем из библиотек�
 load_dotenv()  # Функция автоматически находит и читает .env
 FOLDER_KEY = os.getenv('FOLDER_ID')
 API_KEY = os.getenv('OPENROUTER_API_KEY')
-LLM_API_URL = 'https://openai.bothub.ru/v1'
+LLM_API_URL = 'https://openai.bothub.ru/v1/chat/completions'
 # 'https://openrouter.ai/api/v1/chat/completions'
 
 TOKEN = os.getenv('BOT_TOKEN') # Найдет значение по имени и запомнит в переменную
