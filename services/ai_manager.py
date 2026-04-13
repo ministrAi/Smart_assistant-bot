@@ -16,18 +16,8 @@ async def get_ai_response(history):
         "messages": history,
         "temperature": 0.5,
         "max_tokens": 700,
-        "reasoning": {"enabled": True},
     }
 
-
-    # Открываем контекстный менеджер и создаем асинхронный http клиент
-    async with httpx.AsyncClient() as client:
-        # Отправляется POST‑запрос на API.
-        response = await client.post(
-            LLM_API_URL,
-            headers=headers,
-            json=payload
-        )
     # Открываем контекстный менеджер и создаем асинхронный http клиент
     async with httpx.AsyncClient() as client:
         # Отправляется POST‑запрос на API.
