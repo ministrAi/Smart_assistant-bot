@@ -34,7 +34,13 @@ async def get_ai_response(history):
             return "Ошибка на сервере, попробуйте позже."
 
         if response.status_code != 200:
+            # Логи помогут быстро понять причину (невалидный ключ, 404 и т.д.)
             print(f"Ошибка API. Статус: {response.status_code}, Ответ: {response.text}")
+            # Чуть более информативный ответ пользователю
+            if response.status_code == 401:
+                return "🔐 Токен доступа к модели отклонён. Проверьте BOTHUB_API_KEY."
+            if response.status_code == 404:
+                return "🤖 Эндпоинт модели не найден. Обновите бота и попробуйте снова."
             return "Произошла ошибка при обращении к ИИ."
 
         # Преобразовываем текст ответа в словарь Python
