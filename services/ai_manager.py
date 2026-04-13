@@ -12,7 +12,7 @@ async def get_ai_response(history):
     }
     # Подготовка тела запроса
     payload = {
-        "model": "'minimax-m2.7'",
+        "model": "minimax-m2.7",
         "messages": history,
         "temperature": 0.5,
         "max_tokens": 700,
