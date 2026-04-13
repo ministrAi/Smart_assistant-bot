@@ -3,8 +3,8 @@ from dotenv import load_dotenv  #Импортируем из библиотек�
 
 load_dotenv()  # Функция автоматически находит и читает .env
 FOLDER_KEY = os.getenv('FOLDER_ID')
-API_KEY = os.getenv('OPENROUTER_API_KEY')
-LLM_API_URL = "https://openai.bothub.chat/v1/chat/completions"
+API_KEY = os.getenv('BOTHUB_API_KEY')
+LLM_API_URL = "https://bothub.chat/api/v2/model/list?children=1"
 
 TOKEN = os.getenv('BOT_TOKEN') # Найдет значение по имени и запомнит в переменную
 MAX_ACTIVE_MESSAGES = 100

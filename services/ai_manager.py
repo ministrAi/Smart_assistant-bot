@@ -44,7 +44,7 @@ async def get_ai_response(history):
     full_messages = [system_prompt] + history
 
     payload = {
-        "model": 'deepseek-v3.2',
+        "model": "gpt-3.5-turbo",
         "messages": full_messages,
         "temperature": 0.5,
         "max_tokens": 800
