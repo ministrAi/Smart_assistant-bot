@@ -44,7 +44,7 @@ async def get_ai_response(history):
     full_messages = [system_prompt] + history
 
     payload = {
-        "model": 'minimax-m2.7',
+        "model": 'minimax/minimax-m2.7',
         "messages": full_messages,
         "temperature": 0.5,
         "max_tokens": 800
