@@ -32,7 +32,7 @@ async def get_ai_response(history):
     full_messages = [system_prompt] + trimmed_history
     # Подготовка тела запроса
     payload = {
-        "model": "deepseek-chat-v3-0324",
+        "model": "deepseek-v3.2-speciale",
         "messages": full_messages,
         "temperature": 0.5,
         "max_tokens": 700,
