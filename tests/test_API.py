@@ -1,4 +1,3 @@
-# from itertools import count
 
 from fastapi.testclient import TestClient
 from api.main1 import app

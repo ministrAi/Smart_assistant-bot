@@ -22,7 +22,7 @@ def test_save_message_and_get_history(test_db):
     # 3. Assert (Проверка)
     assert len(history) == 1
     assert history[0]['role'] == role
-    assert history[0]['text'] == text
+    assert history[0]['content'] == text
 
 
 # Тестирование получение статистики
