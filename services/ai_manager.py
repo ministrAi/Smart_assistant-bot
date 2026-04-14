@@ -68,6 +68,7 @@ async def get_ai_response(history):
 
         # Выводим текст ответа в консоль для отладки
         print(response_data)
+        print(f"🔍 Использована модель: {response_data.get('model', 'не указана')}")
 
     try:
         # Это типовой путь для извлечения текста для большинства LLM-моделей
