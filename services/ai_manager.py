@@ -39,7 +39,7 @@ async def get_ai_response(history):
     }
 
     # Открываем контекстный менеджер и создаем асинхронный http клиент
-    async with httpx.AsyncClient(timeout=30.0) as client:
+    async with httpx.AsyncClient(timeout=60.0) as client:
         # Отправляется POST‑запрос на API.
         response = await client.post(
             LLM_API_URL,
