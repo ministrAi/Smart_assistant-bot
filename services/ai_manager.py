@@ -32,7 +32,7 @@ async def get_ai_response(history):
     full_messages = [system_prompt] + trimmed_history
     # Подготовка тела запроса
     payload = {
-        "model": "deepseek-v3.2-speciale",
+        "model": "grok-4.1-fast",
         "messages": full_messages,
         "temperature": 0.5,
         "max_tokens": 700,
