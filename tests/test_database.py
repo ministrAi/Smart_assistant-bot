@@ -1,5 +1,4 @@
-# import sqlite3
-import psycopg2
+import sqlite3
 from services.database import save_message, get_conversation_history, getting_statistics, delete_user_messages
 from datetime import datetime
 from config import TEST_DB_URL
@@ -79,16 +78,15 @@ def test_message_limit_deactivates_old(test_db):
     # Проверяем, что первое смс ушло и второе заняло его место
     assert history_after[0]['text'] == "Сообщение №1"
 
-    conn = psycopg2.connect(TEST_DB_URL)
+    conn = sqlite3.connect(TEST_DB_URL.replace("sqlite:///", ""))
     cursor = conn.cursor()
     cursor.execute("""
     SELECT is_active
     FROM Communication
-    WHERE text = %s
+    WHERE text = ?
     """, ("Сообщение №0",))
     is_active_val = cursor.fetchone()[0]
     conn.close()
-
 
     assert is_active_val == 0
 
