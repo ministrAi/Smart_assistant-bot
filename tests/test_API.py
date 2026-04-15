@@ -20,7 +20,7 @@ def test_get_user_history(test_db):
     assert data["user_id"] == 111
     assert data["messages"][0]["role"] == 'user'
     assert data["messages"][1]["role"] == 'assistant'
-    assert data["messages"][1]["text"] == 'Test2'
+    assert data["messages"][1]["content"] == 'Test2'
     assert data["count"] == 2
 
 

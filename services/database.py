@@ -89,6 +89,21 @@ def get_conversation_history(user_id, limit=config.MAX_ACTIVE_MESSAGES):
 
     return message_list
 
+# Полное удаление всех сообщений и обнуление ID.
+def hard_reset_communications():
+    conn = psycopg2.connect(config.DATABASE_URL)
+    cursor = conn.cursor()
+
+    try:
+        cursor.execute("""
+        TRUNCATE TABLE Communication
+        RESTART IDENTITY""")
+        conn.commit()
+    except Exception as e:
+        print(f"❌ Ошибка при очистке БД: {e}")
+        conn.rollback()
+    finally:
+        conn.close()
 
 
 

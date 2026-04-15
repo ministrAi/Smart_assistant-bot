@@ -5,7 +5,7 @@ from aiogram import F
 from datetime import datetime
 from services.ai_manager import get_ai_response
 from services.database import save_message
-from services.database import get_conversation_history, delete_user_messages
+from services.database import get_conversation_history, delete_user_messages, hard_reset_communications
 
 user_router = Router()
 
@@ -51,6 +51,12 @@ async def cmd_clear(message: Message):
             "<i>Ваша история и так пуста или уже была очищена!</i> ✨",
             parse_mode="HTML"
         )
+
+@user_router.message(Command("hard_delete"))
+async def admin_clear(message: Message):
+    hard_reset_communications()
+    await message.answer("<b>Протоколы очищены.</b> Система перезапущена с нулевым индексом.", parse_mode="HTML")
+
 
 
 @user_router.message(F.text)
