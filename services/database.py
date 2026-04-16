@@ -1,5 +1,7 @@
 import psycopg2
 import config
+import logging
+logger = logging.getLogger(__name__)
 
 
 # Создаем таблицу
@@ -28,7 +30,7 @@ def init_db():
 
 # Сохраняем сообщения в таблицу
 def save_message(user_id, role, text, timestamp):
-    print(f"🔵 Сохраняю: user={user_id}, role={role}, text={text[:20]}...")
+    logger.debug(f"🔵 Сохраняю сообщение: user={user_id}, role={role}, text={text[:20]}...")
     if not isinstance(timestamp, str):
         timestamp = timestamp.isoformat()
 
@@ -100,7 +102,7 @@ def hard_reset_communications():
         RESTART IDENTITY""")
         conn.commit()
     except Exception as e:
-        print(f"❌ Ошибка при очистке БД: {e}")
+        logger.error(f"❌ Ошибка при очистке БД: {e}")
         conn.rollback()
     finally:
         conn.close()

@@ -1,5 +1,7 @@
 import httpx
 from config import API_KEY, LLM_API_URL
+import logging
+logger = logging.getLogger(__name__)
 
 
 async def get_ai_response(history):
@@ -48,37 +50,44 @@ async def get_ai_response(history):
         )
 
         if response.status_code == 429:
+            logger.error("⏳ Модель перегружена. Попробуйте через минуту.")
             return "⏳ Модель перегружена. Попробуйте через минуту."
 
         if response.status_code == 500:
+            logger.error("Ошибка на сервере, попробуйте позже.")
             return "Ошибка на сервере, попробуйте позже."
 
         if response.status_code != 200:
             # Логи помогут быстро понять причину (невалидный ключ, 404 и т.д.)
-            print(f"Ошибка API. Статус: {response.status_code}, Ответ: {response.text}")
+            logger.error(f"Ошибка API. Статус: {response.status_code}, Ответ: {response.text}")
             # Чуть более информативный ответ пользователю
             if response.status_code == 401:
+                logger.error("🔐 Токен доступа к модели отклонён. Проверьте BOTHUB_API_KEY.")
                 return "🔐 Токен доступа к модели отклонён. Проверьте BOTHUB_API_KEY."
             if response.status_code == 404:
+                logger.error("🤖 Эндпоинт модели не найден. Обновите бота и попробуйте снова.")
                 return "🤖 Эндпоинт модели не найден. Обновите бота и попробуйте снова."
+            logger.error("Произошла ошибка при обращении к ИИ.")
             return "Произошла ошибка при обращении к ИИ."
 
         # Преобразовываем текст ответа в словарь Python
         response_data = response.json()
 
         # Выводим текст ответа в консоль для отладки
-        print(response_data)
-        print(f"🔍 Использована модель: {response_data.get('model', 'не указана')}")
+        logger.debug(response_data)
+        logger.debug(f"🔍 Использована модель: {response_data.get('model', 'не указана')}")
 
     try:
         # Это типовой путь для извлечения текста для большинства LLM-моделей
         ai_text = response_data['choices'][0]['message']['content']
 
         if not ai_text or ai_text.strip() == "":
+            logger.error("🤔 AI не смог сформировать ответ. Попробуйте переформулировать вопрос.")
             return "🤔 AI не смог сформировать ответ. Попробуйте переформулировать вопрос."
 
         return ai_text  # Возвращаем чистый текст
 
     except (KeyError, IndexError):
         # Ловим ошибку, если структура ответа неожиданная
+        logger.error("ИИ вернул неверный формат ответа.")
         return "ИИ вернул неверный формат ответа."

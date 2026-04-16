@@ -1,3 +1,4 @@
+import re
 from aiogram import Router
 from aiogram.types import Message
 from aiogram.filters import Command
@@ -6,8 +7,10 @@ from datetime import datetime
 from services.ai_manager import get_ai_response
 from services.database import save_message
 from services.database import get_conversation_history, delete_user_messages, hard_reset_communications
-
 user_router = Router()
+
+import logging
+logger = logging.getLogger(__name__)
 
 
 @user_router.message(Command("start"))
@@ -68,53 +71,51 @@ async def process_echo(message: Message):
 
     try:
         # 1. Сохраняем сообщение пользователя
-        print(f"💾 Сохраняю сообщение от user={user_id}")
+        logger.info(f"💾 Сохраняю сообщение от user={user_id}")
         save_message(
             user_id=user_id,
             role='user',
             text=message.text,
             timestamp=datetime.now().isoformat()
         )
-        print("✅ Сообщение пользователя сохранено")
+        logger.debug("✅ Сообщение пользователя сохранено")
 
         # 2. Получаем историю
-        print("📚 Получаю историю диалога...")
+        logger.info("📚 Получаю историю диалога...")
         history = get_conversation_history(user_id)
-        print(f"📊 Получено {len(history)} сообщений из истории")
+        logger.debug(f"📊 Получено {len(history)} сообщений из истории")
 
         # 3. Запрос к AI
-        print("🤖 Отправляю запрос к AI...")
+        logger.info("🤖 Отправляю запрос к AI...")
         gpt_text = await get_ai_response(history)
-        print(f"📝 Получен ответ от AI длиной {len(gpt_text) if gpt_text else 0} символов")
+        logger.debug(f"📝 Получен ответ от AI длиной {len(gpt_text) if gpt_text else 0} символов")
 
         # 4. Отправка ответа
         try:
             # Теперь используем HTML
             await message.answer(gpt_text, parse_mode="HTML")
-            print("✅ Ответ отправлен успешно (HTML)")
+            logger.debug("✅ Ответ отправлен успешно (HTML)")
 
         except Exception as html_error:
-            print(f"⚠️ Ошибка HTML разметки: {html_error}")
+            logger.warning(f"⚠️ Ошибка HTML разметки: {html_error}")
             # Если теги все же сломаны, чистим их и отправляем как текст
-            import re
+
             clean_text = re.sub('<[^<]+?>', '', gpt_text)
             await message.answer(clean_text)
-            print("✅ Ответ отправлен (очищенный от тегов)")
+            logger.debug("✅ Ответ отправлен (очищенный от тегов)")
 
         # 5. Сохраняем ответ AI
-        print("💾 Сохраняю ответ AI в БД...")
+        logger.info("💾 Сохраняю ответ AI в БД...")
         save_message(
             user_id=user_id,
             role='assistant',
             text=gpt_text,
             timestamp=datetime.now().isoformat()
         )
-        print("✅ Ответ AI сохранен")
+        logger.debug("✅ Ответ AI сохранен")
 
     except Exception as e:
-        print(f"❌ КРИТИЧЕСКАЯ ОШИБКА: {type(e).__name__}: {e}")
-        import traceback
-        traceback.print_exc()
+        logger.exception(f"❌ КРИТИЧЕСКАЯ ОШИБКА: {type(e).__name__}: {e}")
 
         # Отправляем сообщение об ошибке
         await message.answer(

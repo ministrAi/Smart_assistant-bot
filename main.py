@@ -3,6 +3,7 @@ from aiogram import Bot, Dispatcher # основной фреймворк для
 from config import TOKEN
 from  handlers.user_handlers import user_router
 from services.database import init_db
+from logger import setup_logging
 
 # Инициализация бота и диспетчера
 bot = Bot(token = TOKEN) # подключение к Telegram API
@@ -20,4 +21,5 @@ async def main():
 if __name__ == "__main__":
     # Запуск асинхронного приложения
     asyncio.run(main())
+    setup_logging()
 
