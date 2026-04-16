@@ -20,6 +20,6 @@ async def main():
 
 if __name__ == "__main__":
     # Запуск асинхронного приложения
-    asyncio.run(main())
     setup_logging()
+    asyncio.run(main())
 
