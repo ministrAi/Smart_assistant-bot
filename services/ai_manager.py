@@ -31,10 +31,10 @@ async def get_ai_response(history):
 
 
     # Берём только последние 200 сообщений, чтобы старые ответы со звездочками не сбивали стиль
-    trimmed_history = history[-200:] if len(history) > 200 else history
+    # trimmed_history = history[-200:] if len(history) > 200 else history
 
     # Объединяем системную роль и историю
-    full_messages = [system_prompt] + trimmed_history
+    full_messages = [system_prompt] + history
     # Подготовка тела запроса
     payload = {
         "model": "mimo-v2-flash",
@@ -88,26 +88,26 @@ async def get_ai_response(history):
             logger.error("🤔 AI не смог сформировать ответ. Попробуйте переформулировать вопрос.")
             return "🤔 AI не смог сформировать ответ. Попробуйте переформулировать вопрос."
 
-            # --- БЛОК ПРИНУДИТЕЛЬНОЙ КОРРЕКЦИИ РАЗМЕТКИ (TELEGRAM SAFE) ---
+        # --- БЛОК ПРИНУДИТЕЛЬНОЙ КОРРЕКЦИИ РАЗМЕТКИ (TELEGRAM SAFE) ---
 
-            # 1. Исправляем переносы строк (убираем все вариации <br>)
-            ai_text = ai_text.replace('<br>', '\n').replace('<br/>', '\n').replace('<br />', '\n')
+        # 1. Исправляем переносы строк (убираем все вариации <br>)
+        ai_text = ai_text.replace('<br>', '\n').replace('<br/>', '\n').replace('<br />', '\n')
 
-            # 2. Очищаем HTML-списки и абзацы, заменяя их на визуальные символы
-            ai_text = ai_text.replace('<ul>', '').replace('</ul>', '')
-            ai_text = ai_text.replace('<li>', '• ').replace('</li>', '\n')
-            ai_text = ai_text.replace('<p>', '').replace('</p>', '\n')
+        # 2. Очищаем HTML-списки и абзацы, заменяя их на визуальные символы
+        ai_text = ai_text.replace('<ul>', '').replace('</ul>', '')
+        ai_text = ai_text.replace('<li>', '• ').replace('</li>', '\n')
+        ai_text = ai_text.replace('<p>', '').replace('</p>', '\n')
 
-            # 3. Удаляем остатки Markdown (на случай, если ИИ смешал стили)
-            # Убираем двойные звездочки и решетки, которые не работают в режиме HTML
-            ai_text = ai_text.replace('**', '').replace('###', '—').replace('##', '—').replace('#', '—')
+        # 3. Удаляем остатки Markdown (на случай, если ИИ смешал стили)
+        # Убираем двойные звездочки и решетки, которые не работают в режиме HTML
+        ai_text = ai_text.replace('**', '').replace('###', '—').replace('##', '—').replace('#', '—')
 
-            # 4. Обработка спецсимволов для предотвращения ошибок парсинга
-            # Экранируем одиночные знаки сравнения, которые ИИ может использовать в тексте
-            ai_text = ai_text.replace(' < ', ' &lt; ').replace(' > ', ' &gt; ')
+        # 4. Обработка спецсимволов для предотвращения ошибок парсинга
+        # Экранируем одиночные знаки сравнения, которые ИИ может использовать в тексте
+        ai_text = ai_text.replace(' < ', ' &lt; ').replace(' > ', ' &gt; ')
 
-            # 5. Финальная очистка лишних пробелов
-            ai_text = ai_text.strip()
+        # 5. Финальная очистка лишних пробелов
+        ai_text = ai_text.strip()
 
         logger.info("Отвечаем")
         return ai_text  # Возвращаем чистый текст
