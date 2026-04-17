@@ -91,21 +91,19 @@ async def get_ai_response(history):
 
         # --- БЛОК ПРИНУДИТЕЛЬНОЙ КОРРЕКЦИИ РАЗМЕТКИ (TELEGRAM SAFE) ---
 
-            # --- БЛОК УЛЬТРА-КОРРЕКЦИИ РАЗМЕТКИ (V3) ---
+        # 1. Заменяем ВСЕ варианты <br> (любой регистр, любые пробелы внутри: <br>, <BR>, <br />, <br  />)
+        ai_text = re.sub(r'(?i)<br\s*/?>', '\n', ai_text)
 
-            # 1. Заменяем ВСЕ варианты <br> (любой регистр, любые пробелы внутри: <br>, <BR>, <br />, <br  />)
-            ai_text = re.sub(r'(?i)<br\s*/?>', '\n', ai_text)
+        # 2. Очищаем HTML-списки и абзацы (тоже без учета регистра)
+        ai_text = re.sub(r'(?i)<ul>|</ul>|<p>|</p>', '', ai_text)
+        ai_text = re.sub(r'(?i)<li>', '• ', ai_text)
+        ai_text = re.sub(r'(?i)</li>', '\n', ai_text)
 
-            # 2. Очищаем HTML-списки и абзацы (тоже без учета регистра)
-            ai_text = re.sub(r'(?i)<ul>|</ul>|<p>|</p>', '', ai_text)
-            ai_text = re.sub(r'(?i)<li>', '• ', ai_text)
-            ai_text = re.sub(r'(?i)</li>', '\n', ai_text)
+        # 3. Принудительно вырезаем Markdown-жирность, которую часто путает модель mimo
+        ai_text = ai_text.replace('**', '')
 
-            # 3. Принудительно вырезаем Markdown-жирность, которую часто путает модель mimo
-            ai_text = ai_text.replace('**', '')
-
-            # 4. Экранируем символы < и >, если они стоят отдельно (защита от поломки HTML)
-            ai_text = ai_text.replace(' < ', ' &lt; ').replace(' > ', ' &gt; ')
+        # 4. Экранируем символы < и >, если они стоят отдельно (защита от поломки HTML)
+        ai_text = ai_text.replace(' < ', ' &lt; ').replace(' > ', ' &gt; ')
 
         logger.info("Отвечаем")
         return ai_text  # Возвращаем чистый текст
