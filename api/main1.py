@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from services.database import get_conversation_history, save_message, delete_user_messages, get_all_users, getting_statistics
+from services.database.base import get_conversation_history, save_message, delete_user_messages, get_all_users, getting_statistics
 from pydantic import BaseModel
 from fastapi import HTTPException
 from datetime import datetime

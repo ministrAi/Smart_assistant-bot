@@ -1,51 +1,9 @@
-import psycopg2
+# from datetime import datetime
 import config
+import psycopg2
+# import base
 import logging
 logger = logging.getLogger(__name__)
-
-
-# Создаем таблицу
-def init_db():
-    conn = psycopg2.connect(config.DATABASE_URL)
-    cursor = conn.cursor()
-
-    # Создаем таблицу для общей памяти если ее нет
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS Communication (
-        id SERIAL PRIMARY KEY ,
-        user_id INTEGER,
-        text TEXT,
-        timestamp TEXT,
-        role TEXT,
-        is_active INTEGER DEFAULT 1
-    )
-    """)
-
-
-    # создаем таблицу для долгосрочной памяти
-    cursor = conn.cursor()
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS LongTermMemory (
-        id SERIAL PRIMARY KEY,
-        user_id INTEGER,
-        fact TEXT,
-        importance TEXT,
-        is_active INTEGER DEFAULT 1
-    )
-    """)
-
-
-    #  создаем таблицу для рабочей памяти
-    cursor = conn.cursor()
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS WorkingMemory (
-        id SERIAL PRIMARY KEY,
-        user_id INTEGER,
-        current_task TEXT
-    )
-    """)
-    conn.commit()
-    conn.close()
 
 
 # Сохраняем сообщения в таблицу
@@ -56,7 +14,6 @@ def save_message(user_id, role, text, timestamp):
 
     conn = psycopg2.connect(config.DATABASE_URL)
     cursor = conn.cursor()
-
     cursor.execute("""
     INSERT INTO Communication (user_id, role, text, timestamp)
     VALUES (%s, %s, %s, %s)
@@ -82,8 +39,6 @@ def save_message(user_id, role, text, timestamp):
 def get_conversation_history(user_id, limit=config.MAX_ACTIVE_MESSAGES):
     conn = psycopg2.connect(config.DATABASE_URL)
     cursor = conn.cursor()
-
-
     cursor.execute("""
     SELECT role, text FROM Communication 
     WHERE user_id = %s 
@@ -128,11 +83,6 @@ def hard_reset_communications():
         conn.close()
 
 
-
-                                            # __API__
-
-
-
 # Мягкое удаление смс из БД
 def delete_user_messages(user_id):
     conn = psycopg2.connect(config.DATABASE_URL)
@@ -149,6 +99,9 @@ def delete_user_messages(user_id):
     conn.close()
     return count
 
+
+
+                                    # __API__
 
 
 # Список пользователей

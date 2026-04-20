@@ -7,7 +7,7 @@ import config
 @pytest.fixture
 def test_db(monkeypatch):
     monkeypatch.setattr(config, "DATABASE_URL", TEST_DB_URL)
-    from services.database import init_db  # импорт ПОСЛЕ подмены
+    from services.database.base import init_db  # импорт ПОСЛЕ подмены
     init_db()
     yield  # здесь выполняются тесты
 

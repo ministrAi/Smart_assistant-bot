@@ -1,6 +1,6 @@
 # import sqlite3
 import psycopg2
-from services.database import save_message, get_conversation_history, getting_statistics, delete_user_messages
+from services.database.base import save_message, get_conversation_history, getting_statistics, delete_user_messages
 from datetime import datetime
 from config import TEST_DB_URL
 
