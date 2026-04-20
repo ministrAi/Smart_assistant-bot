@@ -5,8 +5,8 @@ from aiogram.filters import Command
 from aiogram import F
 from datetime import datetime
 from services.ai_manager import get_ai_response
-from services.database.base import save_message
-from services.database.base import get_conversation_history, delete_user_messages, hard_reset_communications
+from services.database import save_message, get_conversation_history, delete_user_messages, hard_reset_communications
+
 user_router = Router()
 
 import logging
