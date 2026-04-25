@@ -26,6 +26,7 @@ def save_reflection(user_id, reflection, timestamp):
     conn.commit()
     conn.close()
 
+
 def get_reflection(user_id):
     conn = get_connection()
     if not conn: return

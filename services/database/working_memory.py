@@ -13,7 +13,6 @@ def set_task(user_id, current_task):
     ON CONFLICT (user_id) 
     DO UPDATE SET current_task = EXCLUDED.current_task ;
     """,(user_id, current_task, started_at))
-
     conn.commit()
     conn.close()
 

@@ -11,7 +11,6 @@ def save_message(user_id, role, text, timestamp):
     logger.debug(f"🔵 Сохраняю сообщение: user={user_id}, role={role}, text={text[:20]}...")
     if not isinstance(timestamp, str):
         timestamp = timestamp.isoformat()
-
     conn = psycopg2.connect(config.DATABASE_URL)
     cursor = conn.cursor()
     cursor.execute("""
