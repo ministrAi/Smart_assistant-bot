@@ -9,7 +9,7 @@ def init_db():
     conn = psycopg2.connect(config.DATABASE_URL)
     cursor = conn.cursor()
 
-    # Создаем таблицу для общей памяти если ее нет
+    # Создаем таблицу для ОБЩЕЙ памяти если ее нет
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS Communication (
         id SERIAL PRIMARY KEY ,
@@ -22,7 +22,7 @@ def init_db():
     """)
 
 
-    # создаем таблицу для долгосрочной памяти
+    # создаем таблицу для ДОЛГОСРОЧНОЙ памяти
     cursor = conn.cursor()
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS LongTermMemory (
@@ -36,17 +36,35 @@ def init_db():
     """)
 
 
-    #  создаем таблицу для рабочей памяти
+    #  создаем таблицу для РАБОЧЕЙ памяти
     cursor = conn.cursor()
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS WorkingMemory (
         id SERIAL PRIMARY KEY,
         user_id INTEGER,
-        current_task TEXT
+        current_task TEXT,
+        started_at TEXT,
+        is_active INTEGER DEFAULT 1,
+        UNIQUE(user_id)
     )
     """)
     conn.commit()
     conn.close()
+
+
+    # Создаем таблицу для РЕФЛЕКСИВНОЙ памяти
+    cursor = conn.cursor()
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS ReflectionMemory (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER,
+    reflection TEXT,
+    timestamp TEXT,
+    is_active INTEGER DEFAULT 1,
+    """)
+    conn.commit()
+    conn.close()
+
 
 # сохраняем соединение с БД в одну функцию
 def get_connection():

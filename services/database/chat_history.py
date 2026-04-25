@@ -29,10 +29,37 @@ def save_message(user_id, role, text, timestamp):
                   LIMIT %s
               )
         """, (user_id, user_id, config.MAX_ACTIVE_MESSAGES))
-
     conn.commit()
     conn.close()
 
+
+# Получаем смс по текущей задаче
+def get_messages_for_task(user_id, started_at):
+    conn = psycopg2.connect(config.DATABASE_URL)
+    cursor = conn.cursor()
+    cursor.execute("""
+    SELECT role, text FROM Communication 
+    WHERE user_id = %s 
+      AND role IS NOT NULL 
+      AND role IN ('user', 'assistant') 
+      AND is_active = 1
+      AND timestamp >= %s
+    ORDER BY id
+    """, (user_id, started_at))
+
+    message_current_list = []
+    rows = cursor.fetchall()
+    for row in rows:
+        role = row[0]
+        text = row[1]
+
+        if text and text.strip():
+            message_current_list.append({
+                "role": role,
+                "content": text
+            })
+    conn.close()
+    return message_current_list
 
 
 # Получаем диалог
@@ -132,20 +159,20 @@ def getting_statistics():
     total_message = cursor.fetchone()[0]
 
     cursor.execute("""
-        SELECT COUNT(DISTINCT user_id) FROM Communication
-        """)
+    SELECT COUNT(DISTINCT user_id) FROM Communication
+    """)
     total_users = cursor.fetchone()[0]
 
     cursor.execute("""
-        SELECT COUNT(*) FROM Communication
-        WHERE role = 'user'
-        """)
+    SELECT COUNT(*) FROM Communication
+    WHERE role = 'user'
+    """)
     user_messages = cursor.fetchone()[0]
 
     cursor.execute("""
-            SELECT COUNT(*) FROM Communication
-            WHERE role = 'assistant'
-            """)
+    SELECT COUNT(*) FROM Communication
+    WHERE role = 'assistant'
+    """)
     assistant_messages = cursor.fetchone()[0]
 
     conn.close()

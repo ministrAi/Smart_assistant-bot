@@ -8,10 +8,10 @@ def add_fact(user_id, fact, importance):
     cursor = conn.cursor()
     # Смысл: "Попробуй вставить, но если возникнет конфликт по (user_id, fact) — просто обнови важность"
     cursor.execute("""
-        INSERT INTO LongTermMemory (user_id, fact, importance)
-        VALUES (%s, %s, %s)
-        ON CONFLICT (user_id, fact) 
-        DO UPDATE SET importance = EXCLUDED.importance;
+    INSERT INTO LongTermMemory (user_id, fact, importance)
+    VALUES (%s, %s, %s)
+    ON CONFLICT (user_id, fact) 
+    DO UPDATE SET importance = EXCLUDED.importance;
     """,(user_id, fact, importance))
 
     conn.commit()
