@@ -31,9 +31,6 @@ async def get_ai_response(history):
     }
 
 
-    # Берём только последние 200 сообщений, чтобы старые ответы со звездочками не сбивали стиль
-    # trimmed_history = history[-200:] if len(history) > 200 else history
-
     # Объединяем системную роль и историю
     full_messages = [system_prompt] + history
     # Подготовка тела запроса
