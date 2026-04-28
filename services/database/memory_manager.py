@@ -1,6 +1,8 @@
-from services.database import get_task
-from services.database import get_messages_for_task
+import json
+from services.database import add_fact, get_facts, deactivate_fact
+from services.database import get_task, get_messages_for_task, save_reflection, clear_task
 from services.ai_manager import get_ai_response
+from datetime import datetime
 
 
 # Пишем функцию формирования краткого отчета по завершенной задаче
@@ -28,5 +30,31 @@ async def create_reflection(user_id):
     full_task = [user_prompt] + task_messages
     summary_report = await get_ai_response(full_task)
 
+    save_reflection(user_id, reflection=summary_report, timestamp=datetime.now().isoformat())
+    clear_task(user_id)
 
 
+# Пишем логику устаревания фактов
+async def add_fact_with_check(user_id, fact, importance):
+    """Получаем факт, если факта нету, то добавляем сразу, если есть то проверяем на конфликт"""
+    receiving = get_facts(user_id)
+    if not receiving:
+        add_fact(user_id, fact, importance)
+        return
+    else:
+        prompt = {
+            "role": "user",
+            "content": (
+                f"Новый факт {fact}\n\n"
+                f"Существующие факты {json.dumps(receiving, ensure_ascii=False)}\n\n"
+                "Есть ли конфликт? Если да - ответь только цифрой id конфликтующего факта. Если нет — ответь словом None."
+            )
+        }
+        fill_task_1 = [prompt]
+        summary_report_1 = await get_ai_response(fill_task_1)
+
+        # Если ответ на промпт содержит только цифру, то деактивируем старый факт и добавляем новый
+        # Если не только цифру, то просто добавляем факт
+        if summary_report_1.strip().isdigit():
+            deactivate_fact(int(summary_report_1), user_id)
+        add_fact(user_id, fact, importance)
