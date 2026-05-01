@@ -6,6 +6,7 @@ import config
 
 @pytest.fixture
 def test_db(monkeypatch):
+    """Фикстура подмены БД"""
     monkeypatch.setattr(config, "DATABASE_URL", TEST_DB_URL)
     from services.database.base import init_db  # импорт ПОСЛЕ подмены
     init_db()
@@ -14,6 +15,6 @@ def test_db(monkeypatch):
     # Очищаем тестовую БД после тестов
     conn = psycopg2.connect(TEST_DB_URL)
     cursor = conn.cursor()
-    cursor.execute("TRUNCATE TABLE Communication RESTART IDENTITY CASCADE ")
+    cursor.execute("TRUNCATE TABLE Communication, LongTermMemory, WorkingMemory  RESTART IDENTITY CASCADE ")
     conn.commit()
     conn.close()

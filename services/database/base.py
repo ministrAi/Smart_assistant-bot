@@ -48,8 +48,6 @@ def init_db():
         UNIQUE(user_id)
     )
     """)
-    conn.commit()
-    conn.close()
 
 
     # Создаем таблицу для РЕФЛЕКСИВНОЙ памяти
@@ -60,7 +58,8 @@ def init_db():
     user_id INTEGER,
     reflection TEXT,
     timestamp TEXT,
-    is_active INTEGER DEFAULT 1,
+    is_active INTEGER DEFAULT 1
+    )
     """)
     conn.commit()
     conn.close()

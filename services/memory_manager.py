@@ -36,7 +36,7 @@ async def create_reflection(user_id):
 
 # Пишем логику устаревания фактов
 async def add_fact_with_check(user_id, fact, importance):
-    """Получаем факт, если факта нету, то добавляем сразу, если есть то проверяем на конфликт"""
+    """Получаем факт, если факта нет, то добавляем сразу, если есть то проверяем на конфликт"""
     receiving = get_facts(user_id)
     if not receiving:
         add_fact(user_id, fact, importance)
@@ -50,8 +50,8 @@ async def add_fact_with_check(user_id, fact, importance):
                 "Есть ли конфликт? Если да - ответь только цифрой id конфликтующего факта. Если нет — ответь словом None."
             )
         }
-        fill_task_1 = [prompt]
-        summary_report_1 = await get_ai_response(fill_task_1)
+        full_task_1 = [prompt]
+        summary_report_1 = await get_ai_response(full_task_1)
 
         # Если ответ на промпт содержит только цифру, то деактивируем старый факт и добавляем новый
         # Если не только цифру, то просто добавляем факт

@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from services.database.base import get_conversation_history, save_message, delete_user_messages, get_all_users, getting_statistics
+from services.database.chat_history import get_conversation_history, save_message, delete_user_messages, get_all_users, getting_statistics
 from pydantic import BaseModel
 from fastapi import HTTPException
 from datetime import datetime
@@ -10,15 +10,10 @@ app = FastAPI()
 # Получение сообщений
 @app.get("/users/{user_id}/messages", summary="Получить историю сообщений")
 async def get_user_history(user_id: int, limit: int = 10):
-
     messages = get_conversation_history(user_id, limit)
-
-    # Проверяем что смс вообще есть
-    if not messages:
+    if not messages: # Проверяем что смс вообще есть
         raise HTTPException(status_code=404, detail= "Такого пользователя не существует")
-
     print(f"Получено сообщений: {len(messages)}")
-
     return {
         "user_id": user_id,
         "count": len(messages),
