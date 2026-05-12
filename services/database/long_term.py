@@ -11,7 +11,9 @@ def add_fact(user_id, fact, importance):
     INSERT INTO LongTermMemory (user_id, fact, importance)
     VALUES (%s, %s, %s)
     ON CONFLICT (user_id, fact) 
-    DO UPDATE SET importance = EXCLUDED.importance;
+    DO UPDATE SET 
+        importance = EXCLUDED.importance, 
+        is_active = 1;
     """,(user_id, fact, importance))
 
     conn.commit()

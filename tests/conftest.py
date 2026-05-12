@@ -15,6 +15,6 @@ def test_db(monkeypatch):
     # Очищаем тестовую БД после тестов
     conn = psycopg2.connect(TEST_DB_URL)
     cursor = conn.cursor()
-    cursor.execute("TRUNCATE TABLE Communication, LongTermMemory, WorkingMemory  RESTART IDENTITY CASCADE ")
+    cursor.execute("TRUNCATE TABLE Communication, LongTermMemory, WorkingMemory, ReflectionMemory  RESTART IDENTITY CASCADE ")
     conn.commit()
     conn.close()

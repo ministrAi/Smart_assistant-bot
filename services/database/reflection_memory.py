@@ -4,15 +4,18 @@ from .base import get_connection
 
 # Сохранение рефлексии
 def save_reflection(user_id, reflection, timestamp):
+    """Функция сохраняет новую рефлексию пользователя и автоматически поддерживает лимит активных рефлексий, деактивируя старые."""
     if not isinstance(timestamp, str):
         timestamp = timestamp.isoformat()
     conn = get_connection()
     if not conn: return
     cursor = conn.cursor()
+    # Вставляем новую рефлексию
     cursor.execute("""
     INSERT INTO ReflectionMemory (user_id, reflection, timestamp)
     VALUES (%s, %s, %s)
     """, (user_id, reflection, timestamp))
+    # Деактивируем старую
     cursor.execute("""
     UPDATE ReflectionMemory
     SET is_active = 0
@@ -27,6 +30,7 @@ def save_reflection(user_id, reflection, timestamp):
     conn.close()
 
 
+# Получение рефлексии
 def get_reflection(user_id):
     conn = get_connection()
     if not conn: return

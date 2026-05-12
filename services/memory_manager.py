@@ -34,6 +34,7 @@ async def create_reflection(user_id):
     clear_task(user_id)
 
 
+
 # Пишем логику устаревания фактов
 async def add_fact_with_check(user_id, fact, importance):
     """Получаем факт, если факта нет, то добавляем сразу, если есть то проверяем на конфликт"""

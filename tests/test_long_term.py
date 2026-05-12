@@ -3,7 +3,7 @@ from config import TEST_DB_URL
 from services.database import add_fact, get_facts, deactivate_fact
 
 
-def test_add_fact(test_db):
+def test_facts(test_db):
     """Тестируем добавление/получение/удаление факта"""
     # Arrange
     user_id = 123
@@ -50,10 +50,10 @@ def test_facts_isolation(test_db):
 def test_deactivate_is_soft_delete(test_db):
     # Тестируем проверку, что записать остается в таблице после деактивации
     user_id = 123
+
     add_fact(user_id, "Люблю Python", "low")
     facts = get_facts(user_id)
     fact_id = facts[0]["id"]
-
     deactivate_fact(fact_id, user_id)
     conn = psycopg2.connect(TEST_DB_URL)
     cursor = conn.cursor()
