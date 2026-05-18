@@ -1,10 +1,9 @@
-# import sqlite3
 import psycopg2
 from services.database import save_message, get_conversation_history, delete_user_messages
 from services.database.chat_history import getting_statistics
 from datetime import datetime
 from config import TEST_DB_URL
-
+import config
 
 # Тестирование сохранение и получение смс
 def test_save_message_and_get_history(test_db):
@@ -58,40 +57,45 @@ def  test_get_user_history_limit(test_db):
 
 
 # Проверка логики "мягкой" очистки данных
-def test_message_limit_deactivates_old(test_db):
-    # 1. Arrange (Подготовка)
+def test_message_limit_deactivates_old(test_db, monkeypatch):
+    """Тест: при превышении лимита старые сообщения деактивируются"""
     user_id = 555
-    for i in range(40):
-        save_message(user_id, 'user',f"Сообщение №{i}", f"2026-02-02T10:00:{i:02d}")
+    test_limit = 20
 
-    # Проверяем, что кол-во смс 40
+    # === МОКАЕМ лимит на время теста ===
+    monkeypatch.setattr(config, "MAX_ACTIVE_MESSAGES", test_limit)
+
+    # Arrange: Создаём limit сообщений
+    for i in range(test_limit):
+        save_message(user_id, 'user', f"Сообщение №{i}", f"2026-02-02T10:00:{i:02d}")
+
     history_before = get_conversation_history(user_id)
-    assert len(history_before) == 40
+    assert len(history_before) == test_limit
 
-    # 2. Act (Действие)
-    # Добавляем 41-е смс
-    save_message(user_id, "user", "Я - 41-е сообщение", "2026-02-02T13:01:00")
+    # === Act: Добавляем (limit + 1)-е сообщение ===
+    save_message(user_id, "user", "Я - новое сообщение", "2026-02-02T13:01:00")
 
-    # 3. Assert (Проверка)
-    # Проверяем, что смс по прежнему 40 и не больше
+    # === Assert ===
     history_after = get_conversation_history(user_id)
-    assert len(history_after) == 40
 
-    # Проверяем, что первое смс ушло и второе заняло его место
-    assert history_after[0]['text'] == "Сообщение №1"
+    assert len(history_after) == test_limit, f"Должно остаться ровно {test_limit} активных сообщений"
+    assert history_after[0]['content'] == "Сообщение №1", "Самое старое сообщение должно быть деактивировано"
+    assert history_after[-1]['content'] == "Я - новое сообщение", "Новое сообщение должно попасть в историю"
 
+    # Проверка мягкого удаления в базе
     conn = psycopg2.connect(TEST_DB_URL)
     cursor = conn.cursor()
     cursor.execute("""
-    SELECT is_active
-    FROM Communication
-    WHERE text = %s
-    """, ("Сообщение №0",))
-    is_active_val = cursor.fetchone()[0]
+        SELECT is_active 
+        FROM Communication 
+        WHERE user_id = %s AND text = %s
+    """, (user_id, "Сообщение №0"))
+
+    row = cursor.fetchone()
     conn.close()
 
-
-    assert is_active_val == 0
+    assert row is not None
+    assert row[0] == 0, "Самое старое сообщение должно быть деактивировано"
 
 
 # Тестируем удаление смс
