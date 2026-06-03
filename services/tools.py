@@ -1,17 +1,21 @@
 
 import logging
 from datetime import datetime
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 from services.memory_manager import add_fact_with_check
 from services.database import get_facts, get_reflection
 
 logger = logging.getLogger(__name__)
 
-# Сам реестр — просто словарь
+# Реестр — это переводчик строки от LLM в реальный адрес функции в памяти Python.
+# dict[str, dict] — ключ: имя инструмента (строка), значение: словарь с метаданными
 _REGISTRY: dict[str, dict] = {}
 
 
 def register_tool(name: str, description: str, function, parameters: dict = None):
     """Регистрирует инструмент в реестре."""
+    if name in _REGISTRY:
+        logger.warning(f"Инструмент {name} уже зарегистрирован, перезаписываю")
     _REGISTRY[name] = {
         "name": name,
         "description": description,
@@ -22,7 +26,7 @@ def register_tool(name: str, description: str, function, parameters: dict = None
 
 
 def get_tool(name: str) -> dict | None:
-    """Возвращает инструмент по имени или None."""
+    """Возвращает инструмент по имени или None если нет инструмента."""
     return _REGISTRY.get(name)
 
 
@@ -32,20 +36,31 @@ def get_all_tools() -> dict:
 
 
 def get_tools_description() -> str:
-    """
-    Формирует текстовое описание всех инструментов для системного промпта.
-    LLM будет читать именно это.
-    """
+    """Формирует текстовое описание всех инструментов для системного промпта.
+    LLM читает этот текст и выбирает инструмент по имени.
+    Результат вставляется в system_prompt агента при каждом запросе. Строка с именем и описанием"""
     lines = []
     for tool in _REGISTRY.values():
         lines.append(f"- {tool['name']}: {tool['description']}")
     return "\n".join(lines)
 
 
-# ── Атомарные инструменты ──────────────────────────────────────────────
+# ── Атомарные инструменты (Исполнители) ──────────────────────────────────────────────
 
 def _get_current_time(timezone: str = "UTC") -> str:
-    now = datetime.now()
+    # Защита от некорректных строк часовых поясов от LLM; предотвращает падение потока выполнения.
+    try:
+        # 1. Пытаемся создать объект часового пояса из базы данных IANA
+        tz = ZoneInfo(timezone)
+    # 2. Защита от галлюцинаций LLM: если модель передала "MSK" вместо "Europe/Moscow"
+    except ZoneInfoNotFoundError:
+        tz = ZoneInfo("UTC")
+        timezone = "UTC"  # Корректируем имя для итоговой строки
+
+    # 3. Передаем объект zoneinfo прямо в метод .now()
+    now = datetime.now(tz)
+
+    # 4. Возвращаем строковое представление уже валидного, смещенного времени
     return f"Текущее время: {now.strftime('%Y-%m-%d %H:%M:%S')} (timezone: {timezone})"
 
 
@@ -71,6 +86,9 @@ def _get_reflection(user_id: int) -> str:
 
 
 # ── Регистрация ────────────────────────────────────────────────────────
+# Выполняется один раз при импорте модуля.
+# Порядок: сначала определяем функции, потом регистрируем —
+# иначе Python не найдёт _get_current_time в момент вызова register_tool.
 
 register_tool(
     name="get_current_time",

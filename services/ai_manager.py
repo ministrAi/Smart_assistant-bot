@@ -36,7 +36,8 @@ async def get_ai_response(history):
     full_messages = [system_prompt] + history
     # Подготовка тела запроса
     payload = {
-        "model": "mimo-v2-flash",
+        # "model": "mimo-v2-flash",
+        "model": "mimo-v2.5-pro",
         "messages": full_messages,
         "temperature": 0.5,
         "max_tokens": 700,
