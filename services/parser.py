@@ -45,10 +45,11 @@ class RobustReActParser:
             field_name.replace(" ", "-"),
             field_name.lower(),  # "action input"
         ]
-        # Подготавливаем lookahead для остановки, превращая список ключевых слов в строку строку: "Plan|Thought|Action|Action Input|..."
+        # Подготавливаем lookahead для остановки, превращая список ключевых слов в строку: "Plan|Thought|Action|Action Input|..."
         lookahead_keys = "|".join(cls.KEYWORDS)
 
-        # Ищем имя поля, двоеточие/тире, и забираем всё до следующего ключевого слова с новой строки или до конца текста
+        # Ищем имя поля, двоеточие/тире, и забираем всё до следующего ключевого слова,
+        # с новой строки или до конца текста
         for var in variations:
             pattern = rf"{re.escape(var)}\s*[:：-]\s*(.*?)(?=\n\s*(?:{lookahead_keys})|\Z)"
             # re.escape() экранирует спецсимволы (на случай "_", "-", etc.)
@@ -123,18 +124,19 @@ class RobustReActParser:
         output.plan_update = self._extract_field(text, "Plan Update")
         output.final_answer = self._extract_field(text, "Final Answer")
 
-        # Ограничиваем имя инструмента до одного слова (snake_case / подстрока)
+        #   Ограничиваем имя инструмента до одного слова (snake_case / подстрока)
         if output.action:
             action_match = re.match(r'([\w_]+)', output.action)
             output.action = action_match.group(1) if action_match else output.action
-        #   Тернарный оператор if action_match else output.action — защита: если regex вообще ничего не нашёл, оставляем как было.
+        #   Тернарный оператор if action_match
+        #   else output.action — защита: если regex вообще ничего не нашёл, оставляем как было.
 
-        # Извлечение и каскадный парсинг action_input
+        #   Извлечение и каскадный парсинг action_input
         action_input_raw = self._extract_field(text, "Action Input")
         if action_input_raw:
             output.action_input = self._parse_action_input(action_input_raw)
 
-        # Выставляем статус завершения
+        #   Выставляем статус завершения
         output.is_final = bool(output.final_answer)
 
         if not output.thought and not output.final_answer:

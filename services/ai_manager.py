@@ -6,6 +6,9 @@ logger = logging.getLogger(__name__)
 
 
 async def get_ai_response(history):
+    if not history:
+        logger.warning("get_ai_response вызван с пустой историей")
+        history = []
     headers = {
         # 1. Формат данных: мы всегда отправляем данные в формате JSON
         "Content-Type": "application/json",
@@ -40,17 +43,21 @@ async def get_ai_response(history):
         "model": "mimo-v2.5-pro",
         "messages": full_messages,
         "temperature": 0.5,
-        "max_tokens": 700,
+        "max_tokens": 1000,
     }
 
     # Открываем контекстный менеджер и создаем асинхронный http клиент
     async with httpx.AsyncClient(timeout=60.0) as client:
         # Отправляется POST‑запрос на API.
-        response = await client.post(
-            LLM_API_URL,
-            headers=headers,
-            json=payload
-        )
+        try:
+            response = await client.post(
+                LLM_API_URL,
+                headers=headers,
+                json=payload
+            )
+        except httpx.TimeoutException:
+            logger.error("Таймаут запроса к LLM")
+            return "⏳ Модель не отвечает. Попробуйте позже."
 
         if response.status_code == 429:
             logger.error("⏳ Модель перегружена. Попробуйте через минуту.")
