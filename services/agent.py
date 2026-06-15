@@ -17,7 +17,7 @@ async def run_agent(user_id: int, message: str) -> str:
     tools_description = get_tools_description()
 
     system_prompt = (
-        "Ты — автономный ИИ-ассистент Джарвис. Работаешь строго по ReAct-циклу.\n\n"
+        "Ты — автономный ИИ-ассистент Орион. Работаешь строго по ReAct-циклу.\n\n"
         f"Факты о пользователе:\n{facts}\n\n"
         f"Рефлексии:\n{reflections}\n\n"
         f"Доступные инструменты:\n{tools_description}"
@@ -40,6 +40,7 @@ async def run_agent(user_id: int, message: str) -> str:
     iterations = 0
     tool_calls = 0
 
+
     while iterations < MAX_ITERATIONS and tool_calls < MAX_TOOL_CALLS:
         # Отправка контекста в LLM
         iterations += 1
@@ -50,7 +51,17 @@ async def run_agent(user_id: int, message: str) -> str:
         output = agent_parser.parse(raw_text)
         logger.info(f"🧠 Мысль агента: {output.thought}")
 
-        # Если ответ готов, вывод, если нет, вызов инструмента
+        logger.info(f"--- [Шаг ReAct №{iterations}] ---")
+        if output.plan:
+            logger.info(f"📋 План: {output.plan}")
+        if output.thought:
+            logger.info(f"🧠 Мысли: {output.thought}")
+        if output.predict:
+            logger.info(f"🔮 Ожидание от инструмента: {output.predict}")
+        if output.plan_update:
+            logger.info(f"🔄 Обновление плана: {output.plan_update}")
+
+        # Если ответ готов - вывод, если нет - вызов инструмента
         if output.is_final:
             logger.info("✅ Агент нашел финальный ответ.")
             return output.final_answer
@@ -62,13 +73,15 @@ async def run_agent(user_id: int, message: str) -> str:
             logger.info(f"🛠 Агент запрашивает инструмент: {tool_name} с аргументами {tool_args}")
 
             # Ищем инструмент в реестре
-            tool = get_tool(tool_name)
+            tool = get_tool(tool_name)  # Возвращает dict или None
 
             # Если инструмент не найден — пишем об этом в Observation
             if not tool:
                 result = f"Инструмент '{tool_name}' не найден в реестре"
                 logger.warning(f"⚠️ {result}")
+
             else:
+                # Автоматически добавляем user_id, если инструмент его ожидает
                 if "user_id" in tool["parameters"]:
                     tool_args["user_id"] = user_id
                 tool_calls += 1

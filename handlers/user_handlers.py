@@ -4,8 +4,8 @@ from aiogram.types import Message
 from aiogram.filters import Command
 from aiogram import F
 from datetime import datetime
-from services.ai_manager import get_ai_response
-from services.database import save_message, get_conversation_history, delete_user_messages, hard_reset_communications
+from services.agent import run_agent
+from services.database import save_message, delete_user_messages, hard_reset_communications
 
 user_router = Router()
 
@@ -80,14 +80,14 @@ async def process_echo(message: Message):
         )
         logger.debug("✅ Сообщение пользователя сохранено")
 
-        # 2. Получаем историю
-        logger.info("📚 Получаю историю диалога...")
-        history = get_conversation_history(user_id)
-        logger.debug(f"📊 Получено {len(history)} сообщений из истории")
+        # # 2. Получаем историю
+        # logger.info("📚 Получаю историю диалога...")
+        # history = get_conversation_history(user_id)
+        # logger.debug(f"📊 Получено {len(history)} сообщений из истории")
 
         # 3. Запрос к AI
         logger.info("🤖 Отправляю запрос к AI...")
-        gpt_text = await get_ai_response(history)
+        gpt_text = await run_agent(user_id, message.text)
         logger.debug(f"📝 Получен ответ от AI длиной {len(gpt_text) if gpt_text else 0} символов")
 
         # 4. Отправка ответа
