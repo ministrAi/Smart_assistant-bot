@@ -1,7 +1,7 @@
 import json
 from services.database import add_fact, get_facts, deactivate_fact
 from services.database import get_task, get_messages_for_task, save_reflection, clear_task
-from services.ai_manager import get_ai_response
+from services.agent import run_agent
 from datetime import datetime
 import logging
 logger = logging.getLogger(__name__)
@@ -36,7 +36,7 @@ async def create_reflection(user_id):
     # передаем в LLM и сохраняем в переменную
     full_task = [user_prompt] + task_messages
 
-    summary_report = await get_ai_response(full_task)
+    summary_report = await run_agent(full_task)
     logger.debug(f"create_reflection: LLM вернул рефлексию длиной {len(summary_report)} символов")
 
     save_reflection(user_id, reflection=summary_report, timestamp=datetime.now().isoformat())
@@ -64,7 +64,7 @@ async def add_fact_with_check(user_id, fact, importance):
             )
         }
         full_task_1 = [prompt]
-        summary_report_1 = await get_ai_response(full_task_1)
+        summary_report_1 = await run_agent(full_task_1)
         logger.debug(f"add_fact_with_check: LLM ответил '{summary_report_1.strip()}'")
 
         # Если ответ на промпт содержит только цифру, то деактивируем старый факт и добавляем новый
