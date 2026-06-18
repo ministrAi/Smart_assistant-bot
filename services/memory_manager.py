@@ -1,7 +1,7 @@
 import json
 from services.database import add_fact, get_facts, deactivate_fact
 from services.database import get_task, get_messages_for_task, save_reflection, clear_task
-from services.agent import call_llm
+from services.ai_manager import call_llm
 from datetime import datetime
 import logging
 logger = logging.getLogger(__name__)

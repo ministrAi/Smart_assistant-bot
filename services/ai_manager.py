@@ -1,14 +1,11 @@
 import httpx
 import re
-
-from pyexpat.errors import messages
-
 from config import API_KEY, LLM_API_URL
 import logging
 logger = logging.getLogger(__name__)
 
 
-async def call_llm(history):
+async def call_llm(messages: list) -> str:
     """
     Чистый транспорт к LLM. Принимает готовый список messages и возвращает текст.
     Без системного промпта, без постобработки — только HTTP-запрос.
