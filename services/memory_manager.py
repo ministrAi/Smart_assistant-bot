@@ -1,4 +1,5 @@
 import json
+import re
 from services.database import add_fact, get_facts, deactivate_fact
 from services.database import get_task, get_messages_for_task, save_reflection, clear_task
 from services.ai_manager import call_llm
@@ -68,11 +69,25 @@ async def add_fact_with_check(user_id, fact, importance):
         logger.debug(f"add_fact_with_check: LLM ответил '{summary_report_1.strip()}'")
 
         # Если ответ на промпт содержит только цифру, то деактивируем старый факт и добавляем новый
-        # Если не только цифру, то просто добавляем факт
-        if summary_report_1.strip().isdigit():
-            conflict_id = int(summary_report_1.strip())
-            logger.warning(f"add_fact_with_check: конфликт обнаружен, деактивируем факт id={conflict_id} для user_id={user_id}")
-            deactivate_fact(conflict_id, user_id)
+        # Приводим к нижнему регистру для надежности анализа текста
+        llm_reply = summary_report_1.strip().lower()
 
-        add_fact(user_id, fact, importance)
-        logger.info(f"add_fact_with_check: факт добавлен для user_id={user_id}, важность={importance}")
+        # Защита: если модель явно написала "none" или "нет", то конфликта точно нет
+        if "none" in llm_reply or "нет" in llm_reply:
+            logger.info(f"add_fact_with_check: Конфликтов не обнаружено (модель ответила None).")
+            add_fact(user_id, fact, importance)
+            return
+
+        # Ищем первую последовательность цифр в ответе (\d+)
+        match = re.search(r'\d+', llm_reply)
+
+        if match:
+            # Извлекаем найденную цифру и превращаем в int
+            conflict_id = int(match.group())
+            logger.warning(f"add_fact_with_check: Обнаружен конфликт! Деактивируем старый факт ID={conflict_id}")
+            deactivate_fact(conflict_id)
+            add_fact(user_id, fact, importance)
+        else:
+            # Если цифр не найдено и явного "none" не было (на случай странного ответа модели)
+            logger.info(f"add_fact_with_check: Цифр в ответе не найдено, добавляем факт как новый.")
+            add_fact(user_id, fact, importance)

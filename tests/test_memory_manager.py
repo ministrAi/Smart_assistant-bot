@@ -8,7 +8,7 @@ async def fake_response(history):
 
 @pytest.mark.asyncio
 async def test_create_reflection(test_db, monkeypatch):
-    monkeypatch.setattr("services.memory_manager.get_ai_response", fake_response)
+    monkeypatch.setattr("services.memory_manager.call_llm", fake_response)
     user_id = 123
     current_task = "Решить уравнение"
     set_task(user_id, current_task)
@@ -37,7 +37,7 @@ async def test_add_fact_with_check(test_db, monkeypatch):
     async def fake_ai(messages):
         return "None"                    # Первый раз — конфликта нет
 
-    monkeypatch.setattr("services.memory_manager.get_ai_response", fake_ai)
+    monkeypatch.setattr("services.memory_manager.call_llm", fake_ai)
 
     # Первый вызов — добавление нового факта
     await add_fact_with_check(user_id, fact, importance="high")
@@ -51,7 +51,7 @@ async def test_add_fact_with_check(test_db, monkeypatch):
     async def fake_ai_conflict(messages):
         return "1"                       # AI нашёл конфликт с id=1
 
-    monkeypatch.setattr("services.memory_manager.get_ai_response", fake_ai_conflict)
+    monkeypatch.setattr("services.memory_manager.call_llm", fake_ai_conflict)
 
     await add_fact_with_check(user_id, fact, importance="low")
 
