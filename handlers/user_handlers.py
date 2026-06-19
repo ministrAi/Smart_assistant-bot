@@ -6,6 +6,7 @@ from aiogram import F
 from datetime import datetime
 from services.agent import run_agent
 from services.database import save_message, delete_user_messages, hard_reset_communications
+from services.database import get_facts, get_reflection
 
 user_router = Router()
 
@@ -60,6 +61,28 @@ async def admin_clear(message: Message):
     hard_reset_communications()
     await message.answer("<b>Протоколы очищены.</b> Система перезапущена с нулевым индексом.", parse_mode="HTML")
 
+
+@user_router.message(Command("memory"))
+async def cmd_memory(message: Message):
+    user_id = message.from_user.id
+    facts = get_facts(user_id)  # нужно импортировать
+    reflections = get_reflection(user_id)
+
+    response = "<b>🧠 Память Сэра:</b>\n\n"
+
+    if facts:
+        response += "<b>Факты:</b>\n"
+        for f in facts[:5]:
+            response += f"• [{f['importance']}] {f['content']}\n"
+    else:
+        response += "Фактов пока нет.\n"
+
+    if reflections:
+        response += "\n<b>Рефлексии:</b>\n"
+        for r in reflections[-3:]:
+            response += f"• {r['timestamp'][:10]}: {r['content'][:150]}...\n"
+
+    await message.answer(response, parse_mode="HTML")
 
 
 @user_router.message(F.text)

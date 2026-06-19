@@ -85,7 +85,7 @@ async def add_fact_with_check(user_id, fact, importance):
             # Извлекаем найденную цифру и превращаем в int
             conflict_id = int(match.group())
             logger.warning(f"add_fact_with_check: Обнаружен конфликт! Деактивируем старый факт ID={conflict_id}")
-            deactivate_fact(conflict_id)
+            deactivate_fact(conflict_id, user_id)
             add_fact(user_id, fact, importance)
         else:
             # Если цифр не найдено и явного "none" не было (на случай странного ответа модели)

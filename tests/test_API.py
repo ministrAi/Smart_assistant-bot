@@ -1,7 +1,7 @@
-
 from fastapi.testclient import TestClient
 from api.main1 import app
 from services.database.chat_history import save_message, get_conversation_history
+from services.database.base import init_db
 
 # Создаем клиента. Он будет делать запросы к приложению в памяти, не запуская реальный сервер в терминале.
 client = TestClient(app)

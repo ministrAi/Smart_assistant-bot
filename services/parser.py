@@ -51,7 +51,7 @@ class RobustReActParser:
         # Ищем имя поля, двоеточие/тире, и забираем всё до следующего ключевого слова,
         # с новой строки или до конца текста
         for var in variations:
-            pattern = rf"{re.escape(var)}\s*[:：-]\s*(.*?)(?=\n\s*(?:{lookahead_keys})|\Z)"
+            pattern = rf"{re.escape(var)}\s*[:：-][ \t]*(.*?)(?=\n\s*(?:{lookahead_keys})|\Z)"
             # re.escape() экранирует спецсимволы (на случай "_", "-", etc.)
 
             match = re.search(pattern, text, re.DOTALL | re.IGNORECASE)
@@ -95,7 +95,7 @@ class RobustReActParser:
         # Попытка 3: Текстовый формат key=value или key: value
         params = {}
         # Новый regex
-        pattern = r'(\w+)\s*[:=]\s*(?:"([^"]*)"|\'([^\']*)\'|([^,]+))'
+        pattern = r'(\w+)\s*[:=]\s*(?:"([^"]*)"|\'([^\']*)\'|([^,\n]+))'
         for match in re.finditer(pattern, text):
             key = match.group(1)
             value = match.group(2) or match.group(3) or match.group(4)
