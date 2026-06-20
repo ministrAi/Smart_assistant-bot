@@ -54,6 +54,7 @@ async def run_agent(user_id: int, message: str) -> str:
         "Всегда беспрекословно подчиняйся прямым командам Сэра по коррекции твоего поведения или стиля из последних сообщений."
     )
 
+
     # Сборка контекста
     history = get_conversation_history(user_id)
     messages = [
