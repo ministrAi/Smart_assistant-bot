@@ -123,4 +123,3 @@ async def run_agent(user_id: int, message: str) -> str:
     f"⚠️ Превышен лимит: iterations={iterations}, tool_calls={tool_calls}"
 )
     return f"Прошу прощения, Сэр. Задача оказалась слишком сложной."
-
