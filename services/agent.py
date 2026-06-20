@@ -66,6 +66,7 @@ async def run_agent(user_id: int, message: str) -> str:
         # Отправка контекста в LLM
         iterations += 1
         raw_text = await call_llm(messages)
+        logger.info(f"📩 RAW от LLM: {raw_text!r}")
         messages.append({"role": "assistant", "content": raw_text})
 
         # Парсинг ответа LLM
