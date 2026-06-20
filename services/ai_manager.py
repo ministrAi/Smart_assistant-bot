@@ -20,7 +20,7 @@ async def call_llm(messages: list) -> str:
 
     # Подготовка тела запроса
     payload = {
-        "model": "mimo-v2-flash",
+        "model": "deepseek-v4-pro",
         # "model": "mimo-v2.5-pro",
         "messages": messages,
         "temperature": 0.5,
