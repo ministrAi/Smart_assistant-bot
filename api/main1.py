@@ -6,6 +6,7 @@ from pydantic import BaseModel
 from datetime import datetime
 
 
+
 app = FastAPI()
 
 # Получение сообщений

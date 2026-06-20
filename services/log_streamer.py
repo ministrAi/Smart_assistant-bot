@@ -3,7 +3,6 @@ import os
 
 LOG_FILE_PATH = "logs/bot.log"
 
-
 async def tail_log_file():
     """
     Асинхронный генератор: читает лог-файл как `tail -f`.

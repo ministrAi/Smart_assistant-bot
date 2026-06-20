@@ -22,4 +22,3 @@ if __name__ == "__main__":
     # Запуск асинхронного приложения
     setup_logging()
     asyncio.run(main())
-
