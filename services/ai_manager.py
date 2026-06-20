@@ -20,8 +20,8 @@ async def call_llm(messages: list) -> str:
 
     # Подготовка тела запроса
     payload = {
-        # "model": "mimo-v2-flash",
-        "model": "mimo-v2.5-pro",
+        "model": "mimo-v2-flash",
+        # "model": "mimo-v2.5-pro",
         "messages": messages,
         "temperature": 0.5,
         "max_tokens": 1000,
