@@ -103,7 +103,6 @@ async def run_agent(user_id: int, message: str) -> str:
 
         # Парсинг ответа LLM
         output = agent_parser.parse(raw_text)
-        logger.info(f"🧠 Мысль агента: {output.thought}")
 
         logger.info(f"--- [Шаг ReAct №{iterations}] ---")
         if output.plan:
@@ -119,6 +118,16 @@ async def run_agent(user_id: int, message: str) -> str:
         if output.is_final:
             logger.info("✅ Агент нашел финальный ответ.")
             return output.final_answer
+
+        elif not output.action and not output.thought:
+            # Модель вышла за пределы ReAct-формата (нет Thought, нет Action),
+            # но raw_text — связный текст, а не мусор. Трактуем как финальный ответ,
+            # чтобы не зацикливаться на поиске пустого имени инструмента.
+            logger.warning(
+                "⚠️ Модель не следует ReAct-формату (нет Thought/Action). "
+                "Возвращаем raw_text как финальный ответ."
+            )
+            return raw_text
 
         else:
             # Подготовка и вызов инструмента
