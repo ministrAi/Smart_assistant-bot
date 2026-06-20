@@ -103,8 +103,8 @@ async def run_agent(user_id: int, message: str) -> str:
             # но raw_text — связный текст, а не мусор. Трактуем как финальный ответ,
             # чтобы не зацикливаться на поиске пустого имени инструмента.
             logger.warning(
-                "⚠️ Модель не следует ReAct-формату (нет Thought/Action). "
-                "Возвращаем raw_text как финальный ответ."
+                f"⚠️ Модель не следует ReAct-формату (нет Thought/Action). "
+                f"Возвращаем raw_text как финальный ответ.\nRAW: {raw_text[:400]}..."
             )
             return raw_text
 

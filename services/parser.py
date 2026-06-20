@@ -63,6 +63,10 @@ class RobustReActParser:
                 if val.lower() in ["none", "null", ""]:
                     return ""
                 return val
+            if field_name.lower() == "final answer":
+                final_match = re.search(r'(?i)Final Answer[:：-]\s*(.*)', text, re.DOTALL)
+                if final_match:
+                    return final_match.group(1).strip()
         # если не найдено, возврат пустой строки
         return ""
         logger.warning("Поле пустое или содержит мусор.")
@@ -141,7 +145,8 @@ class RobustReActParser:
 
         if not output.thought and not output.final_answer:
             logger.warning("Модель сошла с формата: не найдено ни Thought, ни Final Answer.")
-
+        if output.final_answer and not output.is_final:
+            output.is_final = True
         return output
 
 
