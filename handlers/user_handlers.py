@@ -7,6 +7,8 @@ from datetime import datetime
 from services.agent import run_agent
 from services.database import save_message, delete_user_messages, hard_reset_communications
 from services.database import get_facts, get_reflection
+from services.task_registry import register_task, unregister_task, cancel_task
+import asyncio
 
 user_router = Router()
 
@@ -108,10 +110,21 @@ async def process_echo(message: Message):
         # history = get_conversation_history(user_id)
         # logger.debug(f"📊 Получено {len(history)} сообщений из истории")
 
-        # 3. Запрос к AI
+        # 3. Запрос к AI — через Task, чтобы можно было отменить извне
         logger.info("🤖 Отправляю запрос к AI...")
-        gpt_text = await run_agent(user_id, message.text)
-        logger.debug(f"📝 Получен ответ от AI длиной {len(gpt_text) if gpt_text else 0} символов")
+        task = asyncio.create_task(run_agent(user_id, message.text))
+        register_task(user_id, task)
+        try:
+            gpt_text = await task
+        except asyncio.CancelledError:
+            logger.info(f"🛑 Задача отменена пользователем: user_id={user_id}")
+            await message.answer(
+                "<b>Задача остановлена, Сэр.</b> Протокол прерван по вашей команде.",
+                parse_mode="HTML"
+            )
+            return
+        finally:
+            unregister_task(user_id)
 
         # 4. Отправка ответа
         try:
@@ -143,5 +156,21 @@ async def process_echo(message: Message):
         # Отправляем сообщение об ошибке
         await message.answer(
             "<b>Произошла внутренняя ошибка.</b> Пожалуйста, попробуйте позже.",
+            parse_mode="HTML"
+        )
+
+@user_router.message(Command("stop"))
+async def cmd_stop(message: Message):
+    user_id = message.from_user.id
+    stopped = cancel_task(user_id)
+
+    if stopped:
+        await message.answer(
+            "<b>Принято.</b> Отменяю текущий протокол...",
+            parse_mode="HTML"
+        )
+    else:
+        await message.answer(
+            "<i>Активных задач не найдено.</i> Я уже свободен, Сэр.",
             parse_mode="HTML"
         )
