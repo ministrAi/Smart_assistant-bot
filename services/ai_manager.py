@@ -20,7 +20,7 @@ async def call_llm(messages: list) -> str:
 
     # Подготовка тела запроса
     payload = {
-        "model": "grok-4.3",
+        "model": "qwen3.6-plus",
         # "model": "minimax-m3",
         # "model": "mimo-v2.5-pro",
         "messages": messages,
