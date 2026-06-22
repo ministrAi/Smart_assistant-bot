@@ -26,4 +26,4 @@ def setup_logging():
     root_logger.addHandler(file_handler)
 
     # установка чувствительности
-    root_logger.setLevel(logging.INFO)
+    root_logger.setLevel(logging.DEBUG)
