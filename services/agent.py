@@ -83,10 +83,11 @@ async def run_agent(user_id: int, message: str) -> str:
         iterations += 1
         raw_text = await call_llm(messages)
         logger.info(f"📩 RAW от LLM: {raw_text!r}")
-        messages.append({"role": "assistant", "content": raw_text})
-
         # Парсинг ответа LLM
         output = agent_parser.parse(raw_text)
+        messages.append({"role": "assistant", "content": raw_text})
+
+
 
         logger.info(f"--- [Шаг ReAct №{iterations}] ---")
         if output.plan:
@@ -130,6 +131,7 @@ async def run_agent(user_id: int, message: str) -> str:
             else:
                 # Автоматически добавляем user_id, если инструмент его ожидает
                 if "user_id" in tool["parameters"]:
+                    tool_args["user_id"] = user_id
                     tool_args["user_id"] = user_id
                 tool_calls += 1
                 try:

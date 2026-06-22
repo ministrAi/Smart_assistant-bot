@@ -154,6 +154,21 @@ class RobustReActParser:
             output.final_answer = ""
             output.is_final = False
 
+            # Обрезаем raw_output до конца Action Input первого действия —
+            # дальше в тексте модель сама выдумала Observation/Plan Update/второй
+            # Action/Final Answer. Если положить это в историю сообщений целиком,
+            # на следующей итерации LLM увидит свою же фантазию как будто это
+            # реальный результат БД — и продолжит галлюцинировать дальше.
+            cutoff_match = re.search(
+                r'Action\s*Input\s*[:：-].*?(?=\n|\Z)',
+                text, re.DOTALL | re.IGNORECASE
+            )
+            if cutoff_match:
+                output.raw_output = text[:cutoff_match.end()].strip()
+                logger.warning(
+                    f"✂️ raw_output обрезан до конца Action Input, "
+                    f"отброшено {len(text) - cutoff_match.end()} символов выдуманного продолжения."
+                )
         if not output.thought and not output.final_answer:
             logger.warning("Модель сошла с формата: не найдено ни Thought, ни Final Answer.")
 
