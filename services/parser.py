@@ -49,9 +49,9 @@ class RobustReActParser:
         lookahead_keys = "|".join(cls.KEYWORDS)
 
         # Ищем имя поля, двоеточие/тире, и забираем всё до следующего ключевого слова,
-        # с новой строки или до конца текста
+        # с новой строки, без неё (слипшийся текст без \n), или до конца текста
         for var in variations:
-            pattern = rf"{re.escape(var)}\s*[:：-][ \t]*(.*?)(?=\n\s*(?:{lookahead_keys})|\Z)"
+            pattern = rf"{re.escape(var)}\s*[:：-]\s*(.*?)(?=\s*(?:{lookahead_keys})\s*[:：-]|\Z)"
             # re.escape() экранирует спецсимволы (на случай "_", "-", etc.)
 
             match = re.search(pattern, text, re.DOTALL | re.IGNORECASE)
@@ -63,10 +63,6 @@ class RobustReActParser:
                 if val.lower() in ["none", "null", ""]:
                     return ""
                 return val
-            if field_name.lower() == "final answer":
-                final_match = re.search(r'(?i)Final Answer[:：-]\s*(.*)', text, re.DOTALL)
-                if final_match:
-                    return final_match.group(1).strip()
         # если не найдено, возврат пустой строки
         return ""
         logger.warning("Поле пустое или содержит мусор.")
@@ -99,7 +95,7 @@ class RobustReActParser:
         # Попытка 3: Текстовый формат key=value или key: value
         params = {}
         # Новый regex
-        pattern = r'(\w+)\s*[:=]\s*(?:"([^"]*)"|\'([^\']*)\'|([^,\n]+))'
+        pattern = r'(\w+)\s*[:=]\s*(?:"([^"]*)"|\'([^\']*)\'|([^,]+))'
         for match in re.finditer(pattern, text):
             key = match.group(1)
             value = match.group(2) or match.group(3) or match.group(4)
@@ -143,10 +139,24 @@ class RobustReActParser:
         #   Выставляем статус завершения
         output.is_final = bool(output.final_answer)
 
+        #   Защита от "галлюцинированного цикла": если модель в ОДНОЙ реплике
+        #   заявила и Action, и Final Answer — это физически невозможно в честном
+        #   ReAct-цикле (между ними должен быть Observation от нашего кода,
+        #   которого модель не могла видеть до реального вызова инструмента).
+        #   Значит модель сама придумала результат инструмента — не доверяем
+        #   такому Final Answer.
+        if output.action and output.final_answer:
+            logger.warning(
+                f"⚠️ Обнаружен галлюцинированный цикл: модель заявила Action='{output.action}' "
+                f"И Final Answer в одной реплике без реального Observation. "
+                f"Final Answer отклонён, продолжаем цикл с реальным вызовом инструмента."
+            )
+            output.final_answer = ""
+            output.is_final = False
+
         if not output.thought and not output.final_answer:
             logger.warning("Модель сошла с формата: не найдено ни Thought, ни Final Answer.")
-        if output.final_answer and not output.is_final:
-            output.is_final = True
+
         return output
 
 

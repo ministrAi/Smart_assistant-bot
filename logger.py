@@ -27,3 +27,10 @@ def setup_logging():
 
     # установка чувствительности
     root_logger.setLevel(logging.DEBUG)
+
+    # Заглушаем шумные DEBUG-логи сетевых библиотек (TCP-хендшейки, заголовки HTTP,
+    # тело запроса/ответа от httpcore._trace) — они не несут пользы для отладки агента
+    # и засоряют поток. Сообщения уровня INFO от httpx (например
+    # "HTTP Request: POST ... 200 OK") при этом останутся видны.
+    logging.getLogger("httpx").setLevel(logging.INFO)
+    logging.getLogger("httpcore").setLevel(logging.WARNING)
