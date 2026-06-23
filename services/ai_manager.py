@@ -21,11 +21,11 @@ async def call_llm(messages: list) -> str:
     # Подготовка тела запроса
     payload = {
 
-        "model": "glm-5.2",
+        # "model": "glm-5.2",
         # "model": "grok-4.3",
         # "model": "qwen3.6-plus",
         # "model": "minimax-m3",
-        # "model": "claude-haiku-4.5,
+        "model": "claude-haiku-4.5",
         "messages": messages,
         "temperature": 0.5,
         "max_tokens": 1000,
