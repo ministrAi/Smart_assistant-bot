@@ -96,7 +96,6 @@ async def process_echo(message: Message):
 
     try:
         # 1. Сохраняем сообщение пользователя
-        logger.info(f"💾 Сохраняю сообщение от user={user_id}")
         save_message(
             user_id=user_id,
             role='user',
