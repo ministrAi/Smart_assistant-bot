@@ -139,6 +139,14 @@ class RobustReActParser:
         #   Выставляем статус завершения
         output.is_final = bool(output.final_answer)
 
+        # Если регулярки не нашли ни одного ключевого слова,
+        # но модель прислала содержательный связный текст:
+        if not output.action and not output.final_answer and text.strip():
+            logger.info(
+                "ℹ️ Парсер: Теги формата ReAct не найдены, но получен связный текст. Трактуем как Final Answer.")
+            output.final_answer = text.strip()
+            output.is_final = True
+
         #   Защита от "галлюцинированного цикла": если модель в ОДНОЙ реплике
         #   заявила и Action, и Final Answer — это физически невозможно в честном
         #   ReAct-цикле (между ними должен быть Observation от нашего кода,
