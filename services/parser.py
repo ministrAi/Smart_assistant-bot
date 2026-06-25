@@ -142,6 +142,14 @@ class RobustReActParser:
         # Если регулярки не нашли ни одного ключевого слова,
         # но модель прислала содержательный связный текст:
         if not output.action and not output.final_answer and text.strip():
+            raw_text = text.strip()
+
+            # ЗАЩИТА ОТ ЗАЦИКЛИВАНИЯ (Repetition Loop Prevention)
+            # Ищем, если одно и то же слово повторяется 4 или более раз подряд через пробел
+            if re.search(r'\b(\w+)(?:\s+\1){3,}\b', raw_text.lower()):
+                logger.error("🚨 Парсер: Обнаружен критический баг зацикливания LLM (Repetition Loop)!")
+                # Принудительно вызываем ошибку, чтобы ReAct-цикл попробовал перегенерировать ответ
+                raise ValueError("LLM generation loop detected")
             logger.info(
                 "ℹ️ Парсер: Теги формата ReAct не найдены, но получен связный текст. Трактуем как Final Answer.")
             output.final_answer = text.strip()

@@ -49,6 +49,7 @@ async def run_agent(user_id: int, message: str) -> str:
     system_prompt += f"Инструменты:\n{tools_description}\n"
 
 
+
     # Сборка контекста
     history = get_conversation_history(user_id)
     messages = [
@@ -70,15 +71,25 @@ async def run_agent(user_id: int, message: str) -> str:
     while iterations < MAX_ITERATIONS and tool_calls < MAX_TOOL_CALLS:
         # Отправка контекста в LLM
         iterations += 1
-        raw_text = await call_llm(messages)
-        logger.info(f"📩 RAW от LLM: {raw_text!r}")
-        # Парсинг ответа LLM
-        output = agent_parser.parse(raw_text)
-        messages.append({"role": "assistant", "content": raw_text})
-
-
-
         logger.info(f"--- [Шаг ReAct №{iterations}] ---")
+        try:
+            raw_text = await call_llm(messages)
+            # Парсинг ответа LLM
+            output = agent_parser.parse(raw_text)
+            messages.append({"role": "assistant", "content": raw_text})
+        except ValueError as e:
+            if "loop detected" in str(e):
+                logger.warning(
+                    f"⚠️ Попытка {iterations} провалилась из-за зацикливания модели. Сбрасываем шаг и пробуем снова...")
+                # Уменьшаем счетчик итераций обратно, чтобы этот сбойный шаг не тратил лимит попыток Сэра
+                iterations -= 1
+                await asyncio.sleep(0.5)  # Небольшая пауза перед повторным запросом
+                continue
+            else:
+                raise e  # Если это другая ошибка ValueError, прокидываем её дальше
+
+
+        logger.info(f"📩 RAW от LLM: {raw_text!r}")
         if output.plan:
             logger.info(f"📋 План: {output.plan}")
         if output.thought:
