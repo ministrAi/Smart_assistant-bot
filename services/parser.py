@@ -51,10 +51,10 @@ class RobustReActParser:
         # Ищем имя поля, двоеточие/тире, и забираем всё до следующего ключевого слова,
         # с новой строки, без неё (слипшийся текст без \n), или до конца текста
         for var in variations:
-            pattern = rf"{re.escape(var)}\s*[:：-]\s*(.*?)(?=\s*(?:{lookahead_keys})\s*[:：-]|\Z)"
+            pattern = rf"(?:^|\n)\s*{re.escape(var)}\s*[:：]\s*(.*?)(?=\s*(?:\n\s*(?:{lookahead_keys})\s*[:：])|\Z)"
             # re.escape() экранирует спецсимволы (на случай "_", "-", etc.)
 
-            match = re.search(pattern, text, re.DOTALL | re.IGNORECASE)
+            match = re.search(pattern, text, re.DOTALL | re.IGNORECASE | re.MULTILINE)
             # поиск регулярного выражения с флагами
             # Если найдено: проверка на маркеры пустоты (none, null) и возврат очищенного текста
             if match:
