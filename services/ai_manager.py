@@ -27,7 +27,7 @@ async def call_llm(messages: list) -> str:
         # "model": "claude-haiku-4.5",
         # "model": "deepseek-chat-v3.1",
         "messages": messages,
-        "temperature": 0.5,
+        "temperature": 0.4,
         "max_tokens": 1000,
         "presence_penalty": 0.2,   # Штраф за повторное использование уже затронутых тем
         "frequency_penalty": 0.3,  # Жёсткий штраф за повторение конкретных слов/токенов
