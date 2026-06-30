@@ -69,7 +69,7 @@ async def run_agent(user_id: int, message: str) -> str:
     tool_calls = 0
 
 
-    while iterations < MAX_ITERATIONS and tool_calls < MAX_TOOL_CALLS:
+    while iterations < MAX_ITERATIONS:
         # Отправка контекста в LLM
         iterations += 1
         logger.info(f"--- [Шаг ReAct №{iterations}] ---")
@@ -142,12 +142,19 @@ async def run_agent(user_id: int, message: str) -> str:
                 result = f"Инструмент '{tool_name}' не найден в реестре"
                 logger.warning(f"⚠️ {result}")
 
+
             else:
-                # Автоматически добавляем user_id, если инструмент его ожидает
-                if "user_id" in tool["parameters"]:
-                    tool_args["user_id"] = user_id
-                    tool_args["user_id"] = user_id
-                tool_calls += 1
+                if tool_calls >= MAX_TOOL_CALLS:
+                    # Лимит реальных вызовов исчерпан — не выполняем инструмент,
+                    # сообщаем об этом модели как Observation, чтобы она сама
+                    # перешла к Final Answer на следующей итерации
+                    result = "Лимит вызовов инструментов исчерпан. Сформируй финальный ответ на основе уже полученных данных."
+                    logger.warning(f"⚠️ {result}")
+                else:
+                    # Автоматически добавляем user_id, если инструмент его ожидает
+                    if "user_id" in tool["parameters"]:
+                        tool_args["user_id"] = user_id
+                    tool_calls += 1
                 try:
                     if asyncio.iscoroutinefunction(tool["function"]):
                         result = await tool["function"](**tool_args)
