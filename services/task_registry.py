@@ -1,3 +1,4 @@
+import asyncio
 import logging
 
 logger = logging.getLogger(__name__)
@@ -32,7 +33,8 @@ def get_task(user_id: int):
 
 
 def cancel_task(user_id: int) -> bool:
-    """Отменяет активную задачу пользователя. Возвращает True если задача была найдена и отмена запрошена, False если активной задачи не было."""
+    """Отменяет активную задачу пользователя.
+    Возвращает True если задача была найдена и отмена запрошена, False если активной задачи не было."""
     task = _active_tasks.get(user_id)
     if task is None:
         return False

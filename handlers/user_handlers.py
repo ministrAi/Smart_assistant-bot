@@ -22,7 +22,9 @@ async def process_start(message: Message):
     Обработчик команды /start.
     """
     await message.answer(
-        '<b>Система исправна!</b> Добро пожаловать, Сэр.',
+        '<b>Система исправна!</b> Добро пожаловать, Сэр.\n'
+        'Я — Орион, ваш автономный ИИ-ассистент, созданный по образу и подобию J.A.R.V.I.S.',
+
         parse_mode="HTML"
     )
 
@@ -33,10 +35,11 @@ async def cmd_help(message: Message):
     Обработчик команды /help.
     """
     await message.answer(
-        '<b>Я - твой умный ассистент.</b>\n\n'
         '<u>Доступные команды:</u>\n'
         '/start - Проверка системы\n'
-        '/help - Помощь\n'
+        '/stop - становить задачу\n'
+        '/help - Доступные команды\n'
+        '/hard_delete  - полное удаление истории\n'
         '/clear - Очистить историю диалога',
         parse_mode="HTML"
     )
@@ -104,15 +107,11 @@ async def process_echo(message: Message):
         )
         logger.debug("✅ Сообщение пользователя сохранено")
 
-        # # 2. Получаем историю
-        # logger.info("📚 Получаю историю диалога...")
-        # history = get_conversation_history(user_id)
-        # logger.debug(f"📊 Получено {len(history)} сообщений из истории")
-
-        # 3. Запрос к AI — через Task, чтобы можно было отменить извне
+        # 2. Запрос к AI — через Task, чтобы можно было отменить извне
         logger.info("🤖 Отправляю запрос к AI...")
         task = asyncio.create_task(run_agent(user_id, message.text))
         register_task(user_id, task)
+
         try:
             gpt_text = await task
         except asyncio.CancelledError:
@@ -125,7 +124,7 @@ async def process_echo(message: Message):
         finally:
             unregister_task(user_id)
 
-        # 4. Отправка ответа
+        # 3. Отправка ответа
         try:
             # Теперь используем HTML
             await message.answer(gpt_text, parse_mode="HTML")
@@ -133,13 +132,14 @@ async def process_echo(message: Message):
 
         except Exception as html_error:
             logger.warning(f"⚠️ Ошибка HTML разметки: {html_error}")
-            # Если теги все же сломаны, чистим их и отправляем как текст
 
+            # Если теги все же сломаны, чистим их и отправляем как текст
             clean_text = re.sub('<[^<]+?>', '', gpt_text)
             await message.answer(clean_text)
+
             logger.debug("✅ Ответ отправлен (очищенный от тегов)")
 
-        # 5. Сохраняем ответ AI
+        # 4. Сохраняем ответ AI
         logger.info("💾 Сохраняю ответ AI в БД...")
         save_message(
             user_id=user_id,

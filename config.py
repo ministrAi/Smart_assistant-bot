@@ -2,12 +2,14 @@ import os
 from dotenv import load_dotenv  #Импортируем из библиотеки функцию для секретных материалов
 
 load_dotenv()  # Функция автоматически находит и читает .env
+
 FOLDER_KEY = os.getenv('FOLDER_ID')
-API_KEY = os.getenv('BOTHUB_API_KEY')
-# BotHub keeps OpenAI‑совместимый API по новому пути /api/v2/openai/v1
-# Старый поддомен openai.bothub.chat перестал отвечать 200 и возвращает 404,
-# из‑за чего бот печатал "Произошла ошибка при обращении к ИИ."
-LLM_API_URL = "https://bothub.chat/api/v2/openai/v1/chat/completions"
+
+# API_KEY = os.getenv('BOTHUB_API_KEY') # Для bothub
+# LLM_API_URL = "https://bothub.chat/api/v2/openai/v1/chat/completions" # Для bothub
+
+LLM_API_URL = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions" # для Google AI
+
 
 TOKEN = os.getenv('BOT_TOKEN') # Найдет значение по имени и запомнит в переменную
 MAX_ACTIVE_MESSAGES = 200
