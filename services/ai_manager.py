@@ -26,7 +26,7 @@ async def call_llm(messages: list) -> str:
         # "model": "gpt-5.4-mini",
         # "model": "claude-haiku-4.5",
         # "model": "deepseek-chat-v3.1",
-        "model": "gemini-2.5-flash",
+        "model": "gemini-3.1-flash-lite",
         "messages": messages,
         "temperature": 0.4,
         "max_tokens": 1000,
