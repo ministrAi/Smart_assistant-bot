@@ -12,28 +12,38 @@ AGENT_TIMEOUT = 30
 
 
 
-
 async def run_agent(user_id: int, message: str) -> str:
-    """Запускаем ReAct-цикл для одного смс"""
+    """Публичная точка входа. Оборачивает цикл в жёсткий тайм-аут."""
     logger.info(f"🤖 run_agent запущен: user_id={user_id}")
+    try:
+        return await asyncio.wait_for(
+            _run_agent_loop(user_id, message),
+            timeout=AGENT_TIMEOUT       # если цикл не уложился в 30с — TimeoutError
+        )
+    except asyncio.TimeoutError:
+        logger.warning(f"⏱ Превышен тайм-аут агента ({AGENT_TIMEOUT}s): user_id={user_id}")
+        return "Прошу прощения, Сэр. Превышено время выполнения задачи."
 
-    # Фаза сборки контекста
+
+
+async def _run_agent_loop(user_id: int, message: str) -> str:
+    """Запускаем ReAct-цикл для одного смс"""
+    # Блок 1: сборка контекста
     facts = get_facts(user_id)
     reflections = get_reflection(user_id)
     tools_description = get_tools_description()
 
+    # Блок 2: Системный промпт контекста
     system_prompt = build_constitution()
-
     # Динамически добавляем данные
     if facts:
         system_prompt += f"Факты о пользователе: {facts}\n"
     if reflections:
         system_prompt += f"Рефлексии: {reflections}\n"
-
     system_prompt += f"Инструменты:\n{tools_description}\n"
 
 
-
+    # БЛОК 3: СБОРКА messages
     # Сборка истории диалога.
     # Формируем список сообщений в формате OpenAI (ChatML).
     history = get_conversation_history(user_id)
@@ -47,7 +57,6 @@ async def run_agent(user_id: int, message: str) -> str:
     # лимиты
     MAX_ITERATIONS = 5
     MAX_TOOL_CALLS = 3
-
     # счётчики
     iterations = 0
     tool_calls = 0
@@ -68,7 +77,7 @@ async def run_agent(user_id: int, message: str) -> str:
                 logger.warning(
                     f"⚠️ Попытка {iterations} провалилась из-за зацикливания модели. Сбрасываем шаг и пробуем снова...")
                 # Уменьшаем счетчик итераций обратно, чтобы этот сбойный шаг не тратил лимит попыток Сэра
-                iterations -= 1
+                iterations -= 1     # не тратим итерацию на детектированный цикл
                 await asyncio.sleep(0.5)  # Небольшая пауза перед повторным запросом
                 continue
             else:
@@ -77,8 +86,8 @@ async def run_agent(user_id: int, message: str) -> str:
 
         logger.info(f"📩 RAW от LLM: {raw_text!r}")
 
-        if not output.action and not output.final_answer: # Нарушение ReAct-формата
-            # Модель не следует формату
+        # ЗАЩИТА: нет ни Action ни Final Answer — модель сломала формат
+        if not output.action and not output.final_answer:
             logger.warning("Модель не выдала ReAct-формат, запрашиваем коррекцию")
             messages.append({
                 "role": "user",
@@ -99,11 +108,13 @@ async def run_agent(user_id: int, message: str) -> str:
             # NB: используется только для лога/дебага, не влияет на ветвление цикла
             logger.info(f"🔄 Обновление плана: {output.plan_update}")
 
+        # ВЕТКА А: финальный ответ
         # Если ответ готов - вывод, если нет - вызов инструмента
         if output.is_final:
             logger.info("✅ Агент нашел финальный ответ.")
-            return output.final_answer
+            return output.final_answer      # чистый выход
 
+        # ВЕТКА Б: деградация формата
         elif not output.action and not output.thought:
             # Модель вышла за пределы ReAct-формата (нет Thought, нет Action),
             # но raw_text — связный текст, а не мусор. Трактуем как финальный ответ,
@@ -114,6 +125,7 @@ async def run_agent(user_id: int, message: str) -> str:
             )
             return raw_text
 
+        # ВЕТКА В: вызов инструмента
         else:
             # Подготовка и вызов инструмента
             tool_name = output.action
@@ -152,7 +164,9 @@ async def run_agent(user_id: int, message: str) -> str:
                 except Exception as e:
                     result = f"Ошибка инструмента '{tool_name}': {e}"
                     logger.error(f"❌ {result}")
-                # Добавляем результат в историю как Observation — всегда
+
+            # Добавляем результат в историю как Observation — всегда
+            # выполняется для ВСЕХ трёх веток
             messages.append({"role": "user", "content": f"Observation: {result}"})
 
     logger.warning(
