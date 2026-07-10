@@ -22,6 +22,9 @@ async def create_reflection(user_id):
     # Получаем смс по текущей задачи из общей памяти
     task_messages = get_messages_for_task(user_id, started_at)
     logger.debug(f"create_reflection: получено {len(task_messages)} сообщений с {started_at}")
+
+
+
     user_prompt = {
         "role": "user",
         "content": (

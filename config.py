@@ -5,11 +5,11 @@ load_dotenv()  # Функция автоматически находит и ч�
 
 FOLDER_KEY = os.getenv('FOLDER_ID')
 
-# API_KEY = os.getenv('BOTHUB_API_KEY') # Для bothub
-# LLM_API_URL = "https://bothub.chat/api/v2/openai/v1/chat/completions" # Для bothub
+API_KEY = os.getenv('BOTHUB_API_KEY') # Для bothub
+LLM_API_URL = "https://bothub.chat/api/v2/openai/v1/chat/completions" # Для bothub
 
-API_KEY = os.getenv('GOOGLE_API_KEY')
-LLM_API_URL = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions" # для Google AI
+# API_KEY = os.getenv('GOOGLE_API_KEY')
+# LLM_API_URL = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions" # для Google AI
 
 
 TOKEN = os.getenv('BOT_TOKEN') # Найдет значение по имени и запомнит в переменную
