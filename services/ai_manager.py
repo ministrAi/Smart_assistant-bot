@@ -74,16 +74,6 @@ async def call_llm(messages: list) -> str:
         logger.debug(response_data)
         logger.debug(f"🔍 Использована модель: {response_data.get('model', 'не указана')}")
 
-        # Выводим только нужные для дебага поля, без служебного мусора (cost, usage, reasoning_details)
-        # model_used = response_data.get('model', 'не указана')
-        # message_obj = response_data.get('choices', [{}])[0].get('message', {})
-        # reasoning = message_obj.get('reasoning')
-        #
-        # logger.debug(f"🔍 Использована модель: {model_used}")
-        # if reasoning:
-        #     logger.debug(f"💭 Reasoning модели: {reasoning}")
-
-
     try:
         # Это типовой путь для извлечения текста для большинства LLM-моделей
         ai_text = response_data['choices'][0]['message']['content']

@@ -8,7 +8,7 @@ import asyncio
 
 
 logger = logging.getLogger(__name__)
-AGENT_TIMEOUT = 30
+AGENT_TIMEOUT = 45
 
 
 
