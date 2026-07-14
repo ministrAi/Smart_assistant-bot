@@ -28,7 +28,7 @@ async def call_llm(messages: list) -> str:
         # "model": "gemini-3.1-flash-lite",
         "messages": messages,
         "temperature": 0.4,
-        "max_tokens": 1000,
+        "max_tokens": 1500,
         # "presence_penalty": 0.2,   # Штраф за повторное использование уже затронутых тем
         # "frequency_penalty": 0.3,  # Жёсткий штраф за повторение конкретных слов/токенов
     }
@@ -80,7 +80,7 @@ async def call_llm(messages: list) -> str:
             prompt_tokens = usage.get('prompt_tokens', 0)
             completion_tokens = usage.get('completion_tokens', 0)
             model_used = response_data.get('model', payload['model'])
-            price = PRICING.get[model_used]
+            price = PRICING.get(model_used)
 
             if price:
                 cost_rub = (prompt_tokens / 1_000_000) * price["input"] + (completion_tokens / 1_000_000) * price["output"]
