@@ -1,6 +1,8 @@
 import httpx
 import re
-from config import API_KEY, LLM_API_URL
+
+
+from config import API_KEY, LLM_API_URL, PRICING
 import logging
 logger = logging.getLogger(__name__)
 
@@ -69,10 +71,30 @@ async def call_llm(messages: list) -> str:
 
         # Преобразовываем текст ответа в словарь Python
         response_data = response.json()
-
         # Выводим текст ответа в консоль для отладки
         logger.debug(response_data)
         logger.debug(f"🔍 Использована модель: {response_data.get('model', 'не указана')}")
+
+        usage = response_data.get('usage')
+        if usage:
+            prompt_tokens = usage.get('prompt_tokens', 0)
+            completion_tokens = usage.get('completion_tokens', 0)
+            model_used = response_data.get('model', payload['model'])
+            price = PRICING.get[model_used]
+
+            if price:
+                cost_rub = (prompt_tokens / 1_000_000) * price["input"] + (completion_tokens / 1_000_000) * price["output"]
+                logger.info(
+                    f"💰 Вход: {prompt_tokens} ток. | Выход: {completion_tokens} ток. "
+                    f"| Стоимость: ~{cost_rub:.4f}₽ (оценка по тарифу BotHub, возможна погрешность)"
+                )
+            else:
+                logger.warning(
+                    f"💰 Вход: {prompt_tokens} ток. | Выход: {completion_tokens} ток. "
+                    f"| Модель '{model_used}' отсутствует в config.PRICING — стоимость не оценена"
+                )
+        else:
+            logger.warning("💰 BotHub не вернул поле 'usage' в ответе — учёт токенов невозможен для этого запроса")
 
     try:
         # Это типовой путь для извлечения текста для большинства LLM-моделей

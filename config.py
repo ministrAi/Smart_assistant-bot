@@ -4,17 +4,20 @@ from dotenv import load_dotenv  #Импортируем из библиотек�
 load_dotenv()  # Функция автоматически находит и читает .env
 
 FOLDER_KEY = os.getenv('FOLDER_ID')
-
 API_KEY = os.getenv('BOTHUB_API_KEY') # Для bothub
 LLM_API_URL = "https://bothub.chat/api/v2/openai/v1/chat/completions" # Для bothub
 
 # API_KEY = os.getenv('GOOGLE_API_KEY')
 # LLM_API_URL = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions" # для Google AI
 
+PRICING = {
+    "deepseek/deepseek-v3.2": {"input": 25.28, "output": 37.92}, # ₽ за 1M токенов (BotHub)
+}
+
 
 TOKEN = os.getenv('BOT_TOKEN') # Найдет значение по имени и запомнит в переменную
-MAX_ACTIVE_MESSAGES = 200
-MAX_ACTIVE_REFLECTION = 50
+MAX_ACTIVE_MESSAGES = 50
+MAX_ACTIVE_REFLECTION = 25
 DATABASE_URL = os.getenv('DATABASE_URL')
 TEST_DB_URL = os.getenv('TEST_DB_URL')
 
