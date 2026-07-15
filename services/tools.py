@@ -3,7 +3,7 @@ import logging
 from datetime import datetime
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 from services.memory_manager import add_fact_with_check
-from services.database import get_facts, get_reflection
+from services.database import get_facts, get_reflection, deactivate_fact
 
 logger = logging.getLogger(__name__)
 
@@ -85,6 +85,26 @@ def _get_reflection(user_id: int) -> str:
     return "Известные рефлексии:\n" + "\n".join(line)
 
 
+def _delete_user_facts(user_id: int, fact_id: int) -> str:
+    try:
+        fact_id = int(fact_id)
+    except (ValueError, TypeError):
+        return f"Некорректный id факта: '{fact_id}'"
+    facts = get_facts(user_id)
+    if not facts:
+        return f"Некорректный id факта: '{fact_id}'"
+
+    target = next((f for f in facts if f["id"] == fact_id), None)
+
+    if not target:
+        return f"Факт с id={fact_id} не найден среди активных фактов пользователя."
+
+    deactivate_fact(fact_id, user_id)
+    return f"Факт удалён: '{target['content']}'"
+
+
+
+
 # ── Регистрация ────────────────────────────────────────────────────────
 # Выполняется один раз при импорте модуля.
 # Порядок: сначала определяем функции, потом регистрируем —
@@ -116,4 +136,11 @@ register_tool(
     description="Возвращает все рефлексии о пользователе. Параметр: user_id (int)",
     function=_get_reflection,
     parameters={"user_id": "int"}
+)
+
+register_tool(
+    name="delete_user_facts",
+    description="Удаляет устаревший или неактуальный или не нужный факт. Параметры: user_id: (int), fact_id: (int)",
+    function=_delete_user_facts,
+    parameters={"user_id": "int", "fact_id": "int"}
 )
