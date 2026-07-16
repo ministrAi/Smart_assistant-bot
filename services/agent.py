@@ -4,6 +4,7 @@ from services.database import get_facts, get_reflection, get_conversation_histor
 from services.parser import agent_parser
 from services.tools import get_tools_description, get_tool
 from services.constitution import build_constitution
+from  services.critic import evaluate_answer
 import asyncio
 
 
@@ -57,7 +58,9 @@ async def _run_agent_loop(user_id: int, message: str) -> str:
     # лимиты
     MAX_ITERATIONS = 5
     MAX_TOOL_CALLS = 3
+    MAX_CRITIC_ATTEMPTS = 1
     # счётчики
+    critic_attempts = 0
     iterations = 0
     tool_calls = 0
 
@@ -111,8 +114,24 @@ async def _run_agent_loop(user_id: int, message: str) -> str:
         # ВЕТКА А: финальный ответ
         # Если ответ готов - вывод, если нет - вызов инструмента
         if output.is_final:
-            logger.info("✅ Агент нашел финальный ответ.")
-            return output.final_answer      # чистый выход
+            passed, feedback = await evaluate_answer(question=message, answer=output.final_answer)
+            if passed :
+                logger.info("✅ Агент нашел финальный ответ.")
+                logger.info("✅ Критик одобрил.")
+                return output.final_answer      # чистый выход
+            else:
+                critic_attempts += 1
+                logger.warning(f"⚠️ Критик отклонил ответ (попытка {critic_attempts}): {feedback}")
+                if critic_attempts >= MAX_CRITIC_ATTEMPTS:
+                    logger.warning("⚠️ Лимит попыток критика исчерпан, отдаём ответ как есть.")
+                    return output.final_answer
+
+                messages.append({
+                    "role": "user",
+                    "content": f"Observation: Критик отклонил твой ответ. {feedback} Переформулируй Final Answer с учётом этого."
+                })
+                iterations -= 1 # не тратим обычную итерацию на попытку критика
+
 
         # ВЕТКА Б: деградация формата
         elif not output.action and not output.thought:
