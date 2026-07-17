@@ -73,7 +73,7 @@ def _get_user_facts(user_id: int) -> str:
     facts = get_facts(user_id)
     if not facts:
         return "Фактов о пользователе не найдено."
-    lines = [f"[{f['importance']}] {f['content']}" for f in facts]
+    lines = [f"[id={f['id']}] [{f['importance']}] {f['content']}" for f in facts]
     return "Известные факты:\n" + "\n".join(lines)
 
 
