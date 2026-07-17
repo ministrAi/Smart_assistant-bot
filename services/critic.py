@@ -5,16 +5,21 @@ from services.ai_manager import call_llm
 
 logger = logging.getLogger(__name__)
 
-async def evaluate_answer(question: str, answer: str) -> tuple[bool, str]:
+async def evaluate_answer(question: str, answer: str, history: list) -> tuple[bool, str]:
     """
     Оценивает финальный ответ агента перед отправкой пользователю.
     Возвращает (прошёл_ли_проверку, фидбек_для_Observation).
     """
+    trace = "\n".join(
+        f"{m['role']}: {m['content']}" for m in history
+    )
+
     critic_prompt = [{
         "role": "user",
         "content": (
             f"Вопрос Сэра: {question}\n\n"
-            f"Черновой ответ Ориона: {answer}\n\n"
+            f"Полный протокол выполнения (Thought/Action/Observation):\n{trace}\n\n"
+            f"Черновой ответ Джарвиса: {answer}\n\n"
             "Оцени ответ по шкале 1-10, по критериям:\n"
             "1. Точность (соответствует фактам и инструменту)\n"
             "2. Полнота (ответил на все части вопроса)\n"

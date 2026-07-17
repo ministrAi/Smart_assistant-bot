@@ -9,7 +9,7 @@ import asyncio
 
 
 logger = logging.getLogger(__name__)
-AGENT_TIMEOUT = 45
+AGENT_TIMEOUT = 60
 
 
 
@@ -114,7 +114,7 @@ async def _run_agent_loop(user_id: int, message: str) -> str:
         # ВЕТКА А: финальный ответ
         # Если ответ готов - вывод, если нет - вызов инструмента
         if output.is_final:
-            passed, feedback = await evaluate_answer(question=message, answer=output.final_answer)
+            passed, feedback = await evaluate_answer(question=message, answer=output.final_answer, history=messages[1:])
             if passed :
                 logger.info("✅ Агент нашел финальный ответ.")
                 logger.info("✅ Критик одобрил.")

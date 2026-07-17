@@ -16,7 +16,7 @@ PRICING = {
 
 
 TOKEN = os.getenv('BOT_TOKEN') # Найдет значение по имени и запомнит в переменную
-MAX_ACTIVE_MESSAGES = 50
+MAX_ACTIVE_MESSAGES = 70
 MAX_ACTIVE_REFLECTION = 25
 DATABASE_URL = os.getenv('DATABASE_URL')
 TEST_DB_URL = os.getenv('TEST_DB_URL')
