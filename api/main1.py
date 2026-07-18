@@ -4,6 +4,7 @@ from services.database.chat_history import get_conversation_history, save_messag
 from services.log_streamer import tail_log_file
 from pydantic import BaseModel
 from datetime import datetime
+from services.database import get_facts, get_reflection, deactivate_fact
 
 
 
@@ -20,6 +21,44 @@ async def get_user_history(user_id: int, limit: int = 10):
         "user_id": user_id,
         "count": len(messages),
         "messages": messages
+    }
+
+
+# Получение фактов о пользователе
+@app.get("/users/{user_id}/facts", summary="Получить факты о пользователе")
+async def get_user_facts(user_id: int):
+    facts = get_facts(user_id)
+    if facts is  None:
+        facts = []
+    print(f"Получено фактов: {len(facts)}")
+    return {
+        "user_id": user_id,
+        "count": len(facts),
+        "facts": facts
+    }
+
+# Получение рефлексии
+@app.get("/users/{user_id}/reflections", summary="Получение списка рефлексий")
+async def get_users_reflections(user_id: int):
+    reflections = get_reflection(user_id)
+    if reflections is None:
+        reflections = []
+    print(f"Получено рефлексии: {len(reflections)}")
+    return {
+        "user_id": user_id,
+        "count": len(reflections),
+        "reflections": reflections
+    }
+
+
+# Деактивация фактов
+@app.delete("/users/{user_id}/facts/{fact_id}", summary="Деактивация фактов")
+async def  deactivate_user_fact(user_id: int, fact_id: int):
+    deactivate_fact(fact_id, user_id)
+    return {
+        "status": "success",
+        "user_id": user_id,
+        "fact_id": fact_id
     }
 
 
@@ -142,3 +181,5 @@ async def logs_page():
     </html>
     """
     return HTMLResponse(content=html_content)
+
+
