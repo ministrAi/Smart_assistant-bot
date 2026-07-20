@@ -26,7 +26,7 @@ async def evaluate_answer(question: str, answer: str, history: list) -> tuple[bo
             "3. Соответствие роли (вежливый, полезный дворецкий, без галлюцинаций)\n\n"
             "Ответь СТРОГО в формате:\n"
             "Score: <число 1-10>\n"
-            "Feedback: <что конкретно улучшить, если <7, иначе 'OK'>"
+            "Feedback: <что конкретно улучшить, если <=7, иначе 'OK'>"
         )
     }]
     try:
@@ -39,7 +39,7 @@ async def evaluate_answer(question: str, answer: str, history: list) -> tuple[bo
         feedback_match = re.search(r'Feedback:\s*(.*)', raw, re.DOTALL)
         feedback = feedback_match.group(1).strip() if feedback_match else ""
 
-        passed = score >= 6
+        passed = score >= 7
         logger.info(f"🧐 Self-Critic: score={score}, passed={passed}")
         return passed, feedback
     except Exception as e:

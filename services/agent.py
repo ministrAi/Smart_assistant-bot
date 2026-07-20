@@ -9,8 +9,12 @@ import asyncio
 
 
 logger = logging.getLogger(__name__)
-AGENT_TIMEOUT = 60
 
+# лимиты
+AGENT_TIMEOUT = 60
+MAX_ITERATIONS = 5
+MAX_TOOL_CALLS = 3
+MAX_CRITIC_ATTEMPTS = 1
 
 
 async def run_agent(user_id: int, message: str) -> str:
@@ -55,10 +59,7 @@ async def _run_agent_loop(user_id: int, message: str) -> str:
     ]
     logger.debug(f"📚 Контекст собран: фактов={len(facts)}, рефлексий={len(reflections)}, истории={len(history)}")
 
-    # лимиты
-    MAX_ITERATIONS = 5
-    MAX_TOOL_CALLS = 3
-    MAX_CRITIC_ATTEMPTS = 1
+
     # счётчики
     critic_attempts = 0
     iterations = 0
