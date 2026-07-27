@@ -2,7 +2,7 @@ import asyncio # для асинхронной работы
 from aiogram import Bot, Dispatcher # основной фреймворк для Telegram бота
 from config import TOKEN
 from  handlers.user_handlers import user_router
-from services.database import init_db
+from services.database import init_db, DatabaseManager
 from logger import setup_logging
 
 # Инициализация бота и диспетчера
@@ -14,6 +14,7 @@ dp.include_router(user_router) # Подключаем обработчика к�
 async def main():
     # Создаем таблицу Communication (Message) в начале
     init_db()
+    DatabaseManager.init_pool()
     # Запускаем главную функцию и ОПРОС сервера Telegram на новые сообщения
     await dp.start_polling(bot)
 

@@ -1,4 +1,4 @@
-from .base import init_db, get_connection
+from .base import init_db, DatabaseManager
 from .chat_history import (
     save_message,
     get_conversation_history,

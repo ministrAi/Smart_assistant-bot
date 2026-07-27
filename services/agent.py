@@ -96,8 +96,8 @@ async def _run_agent_loop(user_id: int, message: str) -> str:
             messages.append({
                 "role": "user",
                 "content": "ОШИБКА: Ты не использовал ReAct-формат. "
-                           "Обязательно используй Action: и Action Input: или Action: final_answer:. "
-                           "Повтори ответ в правильном формате."
+                "Обязательно используй Action: и Action Input: или Action: final_answer:. "
+                "Повтори ответ в правильном формате."
             })
             iterations -= 1  # не тратим итерацию
             continue
