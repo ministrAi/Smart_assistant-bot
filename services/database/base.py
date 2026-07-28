@@ -9,6 +9,7 @@ logger = logging.getLogger(__name__)
 class DatabaseManager:
     _pool = None
 
+    # Инициализация пула
     @classmethod
     def init_pool(cls, minconn=1, maxconn=10):
         cls._pool = pool.SimpleConnectionPool(

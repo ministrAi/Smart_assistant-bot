@@ -4,11 +4,20 @@ from services.database.chat_history import get_conversation_history, save_messag
 from services.log_streamer import tail_log_file
 from pydantic import BaseModel
 from datetime import datetime
-from services.database import get_facts, get_reflection, deactivate_fact
+from services.database import get_facts, get_reflection, deactivate_fact, DatabaseManager
+from contextlib import asynccontextmanager
 
 
 
-app = FastAPI()
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    DatabaseManager.init_pool()
+    yield
+    DatabaseManager._pool.closeal()
+
+app = FastAPI(lifespan=lifespan)
+
+
 
 # Получение сообщений
 @app.get("/users/{user_id}/messages", summary="Получить историю сообщений")

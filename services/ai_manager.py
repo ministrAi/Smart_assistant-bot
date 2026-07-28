@@ -22,10 +22,8 @@ async def call_llm(messages: list) -> str:
 
     # Подготовка тела запроса
     payload = {
-        "model": "deepseek-v3.2",       # Основная модель
-        # "model": "gpt-5.4-mini",      # Альтернатива
-        # "model": "claude-haiku-4.5",  # Для кода
-        # "model": "gemini-3.1-flash-lite",
+        # "model": "deepseek-v3.2",       # Основная модель
+        "model": "gpt-5.6-luna",
         "messages": messages,
         "temperature": 0.4,
         "max_tokens": 1500,
