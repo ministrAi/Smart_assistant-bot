@@ -13,7 +13,7 @@ from contextlib import asynccontextmanager
 async def lifespan(app: FastAPI):
     DatabaseManager.init_pool()
     yield
-    DatabaseManager._pool.closeal()
+    DatabaseManager._pool.closeall()
 
 app = FastAPI(lifespan=lifespan)
 
