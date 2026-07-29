@@ -13,7 +13,7 @@ LLM_API_URL = "https://bothub.chat/api/v2/openai/v1/chat/completions" # Для b
 PRICING = {
     "deepseek/deepseek-v3.2": {"input": 50.44, "output": 75.00}, # ₽ за 1M токенов (BotHub)
     # "gpt-5.6-luna": {"input": 58.93, "output": 353.57},
-    "claude-haiku-4.5": {"input": 131.25, "output": 656.25},
+    "claude-haiku-4-5-20251001": {"input": 131.25, "output": 656.25},
 }
 
 
