@@ -57,6 +57,7 @@ async def _run_agent_loop(user_id: int, message: str) -> str:
     ] + history + [
         {"role": "user", "content": message}
     ]
+    current_turn_start = len(messages)
     logger.debug(f"📚 Контекст собран: фактов={len(facts)}, рефлексий={len(reflections)}, истории={len(history)}")
 
 
@@ -115,7 +116,11 @@ async def _run_agent_loop(user_id: int, message: str) -> str:
         # ВЕТКА А: финальный ответ
         # Если ответ готов - вывод, если нет - вызов инструмента
         if output.is_final:
-            passed, feedback = await evaluate_answer(question=message, answer=output.final_answer, history=messages[1:])
+            passed, feedback = await evaluate_answer(
+                question=message,
+                answer=output.final_answer,
+                history=messages[current_turn_start:]
+            )
             if passed :
                 logger.info("✅ Агент нашел финальный ответ.")
                 logger.info("✅ Критик одобрил.")
