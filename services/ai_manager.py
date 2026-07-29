@@ -22,9 +22,9 @@ async def call_llm(messages: list) -> str:
 
     # Подготовка тела запроса
     payload = {
-        # "model": "deepseek-v3.2",       # Основная модель
+        "model": "deepseek-v4-flash",       # Основная модель
         # "model": "gpt-5.6-luna-pro",
-        "model": "claude-haiku-4.5",
+        # "model": "claude-haiku-4.5",
         "messages": messages,
         "temperature": 0.4,
         "max_tokens": 1500,
