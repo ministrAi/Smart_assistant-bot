@@ -1,6 +1,7 @@
 
 import logging
 from datetime import datetime
+from json import tool
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 from services.memory_manager import add_fact_with_check
 from services.database import get_facts, get_reflection, deactivate_fact
@@ -43,6 +44,31 @@ def get_tools_description() -> str:
     for tool in _REGISTRY.values():
         lines.append(f"- {tool['name']}: {tool['description']}")
     return "\n".join(lines)
+
+
+# Подготавливаем список инструментов для отправки в LLM
+def get_tools_schema():
+    result = []
+    for tools in _REGISTRY.values():
+        properties = {}
+        for param_name, param_type in tools["parameters"].items():
+            properties[param_name] = {"type": param_type}
+        dicts = {
+            "type": "function",
+            "function": {
+                "name": tools["name"],
+                "description": tools["description"],
+                "parameters": {
+                    "type": "object",
+                    "properties": properties,
+                    "required": []
+                }
+            }
+        }
+        result.append(dicts)
+    return result
+
+
 
 
 # ── Атомарные инструменты (Исполнители) ──────────────────────────────────────────────
@@ -119,28 +145,28 @@ register_tool(
 
 register_tool(
     name="save_fact",
-    description="Сохраняет факт о пользователе в долгосрочную память. Параметры: user_id (int), fact (string), importance (low/medium/high).",
+    description="Сохраняет факт о пользователе в долгосрочную память. Параметры: user_id (integer), fact (string), importance (low/medium/high).",
     function=_save_fact,
-    parameters={"user_id": "int", "fact": "string", "importance": "string"}
+    parameters={"user_id": "integer", "fact": "string", "importance": "string"}
 )
 
 register_tool(
     name="get_user_facts",
-    description="Возвращает все активные факты о пользователе. Параметр: user_id (int)",
+    description="Возвращает все активные факты о пользователе. Параметр: user_id (integer)",
     function=_get_user_facts,
-    parameters={"user_id": "int"}
+    parameters={"user_id": "integer"}
 )
 
 register_tool(
     name="get_reflection",
-    description="Возвращает все рефлексии о пользователе. Параметр: user_id (int)",
+    description="Возвращает все рефлексии о пользователе. Параметр: user_id (integer)",
     function=_get_reflection,
-    parameters={"user_id": "int"}
+    parameters={"user_id": "integer"}
 )
 
 register_tool(
     name="delete_user_facts",
-    description="Удаляет устаревший или неактуальный или не нужный факт. Параметры: user_id: (int), fact_id: (int)",
+    description="Удаляет устаревший или неактуальный или не нужный факт. Параметры: user_id: (integer), fact_id: (integer)",
     function=_delete_user_facts,
-    parameters={"user_id": "int", "fact_id": "int"}
+    parameters={"user_id": "integer", "fact_id": "integer"}
 )
