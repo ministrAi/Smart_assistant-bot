@@ -40,7 +40,8 @@ async def create_reflection(user_id):
     # передаем в LLM и сохраняем в переменную
     full_task = [user_prompt] + task_messages
 
-    summary_report = await call_llm(full_task)
+    raw_1 = await call_llm(full_task)
+    summary_report = raw_1["content"]
     logger.debug(f"create_reflection: LLM вернул рефлексию длиной {len(summary_report)} символов")
 
     save_reflection(user_id, reflection=summary_report, timestamp=datetime.now().isoformat())
@@ -70,7 +71,9 @@ async def add_fact_with_check(user_id, fact, importance):
             )
         }
         full_task_1 = [prompt]
-        summary_report_1 = await call_llm(full_task_1)
+        raw_2 = await call_llm(full_task_1)
+        summary_report_1 = raw_2["content"]
+
         logger.debug(f"add_fact_with_check: LLM ответил '{summary_report_1.strip()}'")
 
         # Если ответ на промпт содержит только цифру, то деактивируем старый факт и добавляем новый

@@ -30,7 +30,8 @@ async def evaluate_answer(question: str, answer: str, history: list) -> tuple[bo
         )
     }]
     try:
-        raw = await call_llm(critic_prompt)  # Получаем сырой текст от LLM
+        message = await call_llm(critic_prompt)
+        raw = message["content"]  # Получаем сырой текст от LLM
 
         score_match = re.search(r'Score:\s*(\d+)', raw)
         # fail-open: если критик сам сломал формат — не блокируем ответ пользователю
