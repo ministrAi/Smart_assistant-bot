@@ -1,15 +1,12 @@
 import httpx
-import re
-
-
 from config import API_KEY, LLM_API_URL, PRICING
 import logging
 logger = logging.getLogger(__name__)
 
 
-async def call_llm(messages: list) -> str:
+async def call_llm(messages: list, tools: list = None) -> dict:
     """
-    Чистый транспорт к LLM. Принимает готовый список messages и возвращает текст.
+    Чистый транспорт к LLM. Принимает готовый список messages и возвращает словарь.
     Без системного промпта, без постобработки — только HTTP-запрос.
     """
     headers = {
@@ -31,6 +28,8 @@ async def call_llm(messages: list) -> str:
         # "presence_penalty": 0.2,   # Штраф за повторное использование уже затронутых тем
         # "frequency_penalty": 0.3,  # Жёсткий штраф за повторение конкретных слов/токенов
     }
+    if tools:
+        payload["tools"] = tools
 
     # Открываем контекстный менеджер и создаем асинхронный http клиент
     async with httpx.AsyncClient(timeout=60.0) as client:
@@ -47,26 +46,27 @@ async def call_llm(messages: list) -> str:
 
         if response.status_code == 429:
             logger.error("⏳ Модель перегружена. Попробуйте через минуту.")
-            return "⏳ Модель перегружена. Попробуйте через минуту."
+            return {"content": "⏳ Модель перегружена. Попробуйте через минуту.", "tool_calls": None}
 
         if response.status_code == 500:
             logger.error("Ошибка на сервере, попробуйте позже.")
-            return "Ошибка на сервере, попробуйте позже."
+            return {"content":"Ошибка на сервере, попробуйте позже.", "tool_calls": None}
 
         if response.status_code != 200:
             # Логи помогут быстро понять причину (невалидный ключ, 404 и т.д.)
             logger.error(f"Ошибка API. Статус: {response.status_code}, Ответ: {response.text}")
-            raise RuntimeError(f"LLM вернул {response.status_code}")
 
-            # Чуть более информативный ответ пользователю
             if response.status_code == 401:
                 logger.error("🔐 Токен доступа к модели отклонён. Проверьте BOTHUB_API_KEY.")
-                return "🔐 Токен доступа к модели отклонён. Проверьте BOTHUB_API_KEY."
+                return {"content": "🔐 Токен доступа к модели отклонён. Проверьте BOTHUB_API_KEY.", "tool_calls": None}
+
             if response.status_code == 404:
                 logger.error("🤖 Эндпоинт модели не найден. Обновите бота и попробуйте снова.")
-                return "🤖 Эндпоинт модели не найден. Обновите бота и попробуйте снова."
-            logger.error("Произошла ошибка при обращении к ИИ.")
-            return "Произошла ошибка при обращении к ИИ."
+                return {"content":"🤖 Эндпоинт модели не найден. Обновите бота и попробуйте снова.", "tool_calls": None}
+
+            raise RuntimeError(f"LLM вернул {response.status_code}")
+
+
 
         # Преобразовываем текст ответа в словарь Python
         response_data = response.json()
@@ -97,36 +97,16 @@ async def call_llm(messages: list) -> str:
 
     try:
         # Это типовой путь для извлечения текста для большинства LLM-моделей
-        ai_text = response_data['choices'][0]['message']['content']
+        message = response_data['choices'][0]['message']
 
-        if not ai_text or ai_text.strip() == "":
-            logger.error("🤔 AI не смог сформировать ответ. Попробуйте переформулировать вопрос.")
-            return "🤔 AI не смог сформировать ответ. Попробуйте переформулировать вопрос."
-
-
-        # --- БЛОК ПРИНУДИТЕЛЬНОЙ КОРРЕКЦИИ РАЗМЕТКИ (TELEGRAM SAFE) ---
-        # 0. Заменяем буквальный текстовый литерал \n (две символа: backslash + n),
-        # который модель иногда печатает как текст вместо настоящего перевода строки
-        ai_text = ai_text.replace('\\n', '\n')
-
-        # 1. Заменяем ВСЕ варианты <br> (любой регистр, любые пробелы внутри: <br>, <BR>, <br />, <br  />)
-        ai_text = re.sub(r'(?i)<br\s*/?>', '\n', ai_text)
-
-        # 2. Очищаем HTML-списки и абзацы (тоже без учета регистра)
-        ai_text = re.sub(r'(?i)<ul>|</ul>|<p>|</p>', '', ai_text)
-        ai_text = re.sub(r'(?i)<li>', '• ', ai_text)
-        ai_text = re.sub(r'(?i)</li>', '\n', ai_text)
-
-        # 3. Принудительно вырезаем Markdown-жирность, которую часто путает модель mimo
-        ai_text = ai_text.replace('**', '')
-
-        # 4. Экранируем символы < и >, если они стоят отдельно (защита от поломки HTML)
-        ai_text = ai_text.replace(' < ', ' &lt; ').replace(' > ', ' &gt; ')
+        if not message.get('content') and not message.get('tool_calls'):
+            logger.error("🤔 AI не смог сформировать ответ.")
+            return {"content": "🤔 AI не смог сформировать ответ...", "tool_calls": None}
 
         logger.info("Отвечаем")
-        return ai_text  # Возвращаем чистый текст
+        return message  # Возвращаем объект message целиком (content + tool_calls)
 
     except (KeyError, IndexError):
         # Ловим ошибку, если структура ответа неожиданная
         logger.error("ИИ вернул неверный формат ответа.")
-        return "ИИ вернул неверный формат ответа."
+        return {"content": "ИИ вернул неверный формат ответа.", "tool_calls": None}

@@ -1,4 +1,4 @@
-
+import inspect
 import logging
 from datetime import datetime
 from json import tool
@@ -50,9 +50,17 @@ def get_tools_description() -> str:
 def get_tools_schema():
     result = []
     for tools in _REGISTRY.values():
+        sig = inspect.signature(tools["function"])  # заглянули в функцию
+
         properties = {}
+        required = []
         for param_name, param_type in tools["parameters"].items():
+            if param_name == "user_id":
+                continue
             properties[param_name] = {"type": param_type}
+            has_default = sig.parameters[param_name].default is not inspect.Parameter.empty
+            if not has_default:
+                required.append(param_name)
         dicts = {
             "type": "function",
             "function": {
@@ -61,7 +69,7 @@ def get_tools_schema():
                 "parameters": {
                     "type": "object",
                     "properties": properties,
-                    "required": []
+                    "required": required
                 }
             }
         }
