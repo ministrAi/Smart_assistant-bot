@@ -118,7 +118,7 @@ async def _run_agent_loop(user_id: int, message: str) -> str:
 
         # ВЕТКА А: финальный ответ
         # Если ответ готов - вывод, если нет - вызов инструмента
-        if not llm_response['tool_calls']:
+        if not llm_response.get('tool_calls'):
             passed, feedback = await evaluate_answer(
                 question=message,
                 answer=llm_response['content'],
@@ -149,12 +149,12 @@ async def _run_agent_loop(user_id: int, message: str) -> str:
             # Защита: нативный tool calling теоретически позволяет модели запросить
             # несколько инструментов за один ответ — пока просто предупреждаем в логах
             # и обрабатываем только первый вызов, чтобы не терять его молча.
-            if len(llm_response['tool_calls']) > 1:
+            if len(llm_response.get('tool_calls')) > 1:
                 logger.warning(
-                    f"⚠️ Модель вернула {len(llm_response['tool_calls'])} tool_calls, обрабатываем только первый"
+                    f"⚠️ Модель вернула {len(llm_response.get('tool_calls'))} tool_calls, обрабатываем только первый"
                 )
             # Берём первый (и пока единственный обрабатываемый) вызов инструмента
-            tool_call = llm_response['tool_calls'][0]
+            tool_call = llm_response.get('tool_calls')[0]
 
             # Имя инструмента приходит готовой строкой от API — не нужно парсить текст, как раньше делал parser.py через regex
             tool_name = tool_call['function']['name']
