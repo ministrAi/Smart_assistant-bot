@@ -1,11 +1,12 @@
 import logging
 from services.ai_manager import call_llm
 from services.database import get_facts, get_reflection, get_conversation_history
-from services.parser import agent_parser
-from services.tools import get_tools_description, get_tool
+from services.tools import get_tools_description, get_tool, get_tools_schema
 from services.constitution import build_constitution
 from  services.critic import evaluate_answer
 import asyncio
+import re
+import json
 
 
 logger = logging.getLogger(__name__)
@@ -29,6 +30,20 @@ async def run_agent(user_id: int, message: str) -> str:
         logger.warning(f"⏱ Превышен тайм-аут агента ({AGENT_TIMEOUT}s): user_id={user_id}")
         return "Прошу прощения, Сэр. Превышено время выполнения задачи."
 
+
+def _clean_for_telegram(text: str) -> str:
+    """Приводит текст к безопасному для Telegram HTML виду перед отправкой."""
+    if not text:
+        return text
+
+    text = text.replace('\\n', '\n')
+    text = re.sub(r'(?i)<br\s*/?>', '\n', text)
+    text = re.sub(r'(?i)<ul>|</ul>|<p>|</p>', '', text)
+    text = re.sub(r'(?i)<li>', '• ', text)
+    text = re.sub(r'(?i)</li>', '\n', text)
+    text = text.replace('**', '')
+    text = text.replace(' < ', ' &lt; ').replace(' > ', ' &gt; ')
+    return text
 
 
 async def _run_agent_loop(user_id: int, message: str) -> str:
@@ -72,65 +87,54 @@ async def _run_agent_loop(user_id: int, message: str) -> str:
         iterations += 1
         logger.info(f"--- [Шаг ReAct №{iterations}] ---")
 
+        # Запрос к LLM с передачей схемы инструментов + запись ответа ассистента в историю диалога
         try:
-            raw_text = await call_llm(messages)
-            # Парсинг ответа LLM
-            output = agent_parser.parse(raw_text)
-            messages.append({"role": "assistant", "content": raw_text})
+            llm_response = await call_llm(
+                messages,
+                tools=get_tools_schema()
+            )
+            # Сырой ответ LLM — debug-уровень, для расследования проблем формата
+            logger.debug(f"📩 RAW от LLM: {llm_response!r}")
+            messages.append({
+                **llm_response,
+                "role": "assistant"
+            })
         except ValueError as e:
             if "loop detected" in str(e):
                 logger.warning(
                     f"⚠️ Попытка {iterations} провалилась из-за зацикливания модели. Сбрасываем шаг и пробуем снова...")
-                # Уменьшаем счетчик итераций обратно, чтобы этот сбойный шаг не тратил лимит попыток Сэра
+                # Уменьшаем счетчик итераций обратно, чтобы этот сбойный шаг не тратил лимит попыток
                 iterations -= 1     # не тратим итерацию на детектированный цикл
                 await asyncio.sleep(0.5)  # Небольшая пауза перед повторным запросом
                 continue
             else:
                 raise e  # Если это другая ошибка ValueError, прокидываем её дальше
 
-
-        logger.info(f"📩 RAW от LLM: {raw_text!r}")
-
-        # ЗАЩИТА: нет ни Action ни Final Answer — модель сломала формат
-        if not output.action and not output.final_answer:
-            logger.warning("Модель не выдала ReAct-формат, запрашиваем коррекцию")
-            messages.append({
-                "role": "user",
-                "content": "ОШИБКА: Ты не использовал ReAct-формат. "
-                "Обязательно используй Action: и Action Input: или Action: final_answer:. "
-                "Повтори ответ в правильном формате."
-            })
-            iterations -= 1  # не тратим итерацию
-            continue
-
-        if output.plan:
-            logger.info(f"📋 План: {output.plan}")
-        if output.thought:
-            logger.info(f"🧠 Мысли: {output.thought}")
-        if output.predict:
-            logger.info(f"🔮 Ожидание от инструмента: {output.predict}")
-        if output.plan_update:
-            # NB: используется только для лога/дебага, не влияет на ветвление цикла
-            logger.info(f"🔄 Обновление плана: {output.plan_update}")
+        # Сырой ответ LLM — debug-уровень, для расследования проблем формата
+        logger.debug(f"📩 RAW от LLM: {llm_response!r}")
+        # Текст рассуждений модели (Thought/Plan/Predict слиты в content)
+        if llm_response['content']:
+            logger.info(f"🧠 {llm_response['content']}")
 
         # ВЕТКА А: финальный ответ
         # Если ответ готов - вывод, если нет - вызов инструмента
-        if output.is_final:
+        if not llm_response['tool_calls']:
             passed, feedback = await evaluate_answer(
                 question=message,
-                answer=output.final_answer,
+                answer=llm_response['content'],
                 history=messages[current_turn_start:]
             )
             if passed :
                 logger.info("✅ Агент нашел финальный ответ.")
                 logger.info("✅ Критик одобрил.")
-                return output.final_answer      # чистый выход
+                return _clean_for_telegram(llm_response['content'])      # чистый выход
             else:
                 critic_attempts += 1
                 logger.warning(f"⚠️ Критик отклонил ответ (попытка {critic_attempts}): {feedback}")
                 if critic_attempts >= MAX_CRITIC_ATTEMPTS:
                     logger.warning("⚠️ Лимит попыток критика исчерпан, отдаём ответ как есть.")
-                    return output.final_answer
+                    return _clean_for_telegram(llm_response['content'])
+
 
                 messages.append({
                     "role": "user",
@@ -139,22 +143,23 @@ async def _run_agent_loop(user_id: int, message: str) -> str:
                 iterations -= 1 # не тратим обычную итерацию на попытку критика
 
 
-        # ВЕТКА Б: деградация формата
-        elif not output.action and not output.thought:
-            # Модель вышла за пределы ReAct-формата (нет Thought, нет Action),
-            # но raw_text — связный текст, а не мусор. Трактуем как финальный ответ,
-            # чтобы не зацикливаться на поиске пустого имени инструмента.
-            logger.warning(
-                f"⚠️ Модель не следует ReAct-формату (нет Thought/Action). "
-                f"Возвращаем raw_text как финальный ответ.\nRAW: {raw_text[:300]}..."
-            )
-            return raw_text
-
-        # ВЕТКА В: вызов инструмента
+        # ВЕТКА Б: вызов инструмента
         else:
             # Подготовка и вызов инструмента
-            tool_name = output.action
-            tool_args = output.action_input.copy() # Копируем action_input, чтобы не модифицировать оригинал.
+            # Защита: нативный tool calling теоретически позволяет модели запросить
+            # несколько инструментов за один ответ — пока просто предупреждаем в логах
+            # и обрабатываем только первый вызов, чтобы не терять его молча.
+            if len(llm_response['tool_calls']) > 1:
+                logger.warning(
+                    f"⚠️ Модель вернула {len(llm_response['tool_calls'])} tool_calls, обрабатываем только первый"
+                )
+            # Берём первый (и пока единственный обрабатываемый) вызов инструмента
+            tool_call = llm_response['tool_calls'][0]
+
+            # Имя инструмента приходит готовой строкой от API — не нужно парсить текст, как раньше делал parser.py через regex
+            tool_name = tool_call['function']['name']
+            tool_args = json.loads(tool_call['function']['arguments'])
+            tool_call_id = tool_call['id']
             logger.info(f"🛠 Агент запрашивает инструмент: {tool_name} с аргументами {tool_args}")
 
             tool = get_tool(tool_name)  # Ищем инструмент в реестре. Возвращает dict или None
@@ -191,9 +196,12 @@ async def _run_agent_loop(user_id: int, message: str) -> str:
                     logger.error(f"❌ {result}")
 
             # Добавляем результат в историю как Observation — всегда
-            # выполняется для ВСЕХ трёх веток
-            messages.append({"role": "user", "content": f"Observation: {result}"})
-
+            # выполняется для обеих веток
+            messages.append({
+                "role": "tool",
+                "tool_call_id": tool_call_id,
+                "content": str(result)
+            })
     logger.warning(
     f"⚠️ Превышен лимит: iterations={iterations}, tool_calls={tool_calls}"
 )

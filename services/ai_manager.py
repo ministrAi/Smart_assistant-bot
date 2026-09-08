@@ -74,6 +74,7 @@ async def call_llm(messages: list, tools: list = None) -> dict:
         logger.debug(response_data)
         logger.debug(f"🔍 Использована модель: {response_data.get('model', 'не указана')}")
 
+        # Извлекаем usage из ответа API и сопоставляем модель с тарифом для оценки стоимости запроса
         usage = response_data.get('usage')
         if usage:
             prompt_tokens = usage.get('prompt_tokens', 0)
@@ -99,6 +100,7 @@ async def call_llm(messages: list, tools: list = None) -> dict:
         # Это типовой путь для извлечения текста для большинства LLM-моделей
         message = response_data['choices'][0]['message']
 
+        # Если LLM не вернул ни текст, ни tool_calls — это "пустой" ответ, логируем и возвращаем заглушку
         if not message.get('content') and not message.get('tool_calls'):
             logger.error("🤔 AI не смог сформировать ответ.")
             return {"content": "🤔 AI не смог сформировать ответ...", "tool_calls": None}
