@@ -19,8 +19,8 @@ async def call_llm(messages: list, tools: list = None) -> dict:
 
     # Подготовка тела запроса
     payload = {
-        "model": "deepseek-v4-flash",       # Основная модель
-        # "model": "gpt-5.6-luna-pro",
+        # "model": "deepseek-v4-flash",       # Основная модель
+        "model": "gpt-5.6-luna",
         # "model": "claude-haiku-4.5",
         "messages": messages,
         "temperature": 0.4,
