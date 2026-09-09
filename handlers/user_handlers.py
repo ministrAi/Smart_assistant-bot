@@ -9,6 +9,8 @@ from services.database import save_message, delete_user_messages, hard_reset_com
 from services.database import get_facts, get_reflection
 from services.task_registry import register_task, unregister_task, cancel_task
 import asyncio
+from config import ADMIN_IDS
+
 
 user_router = Router()
 
@@ -63,9 +65,25 @@ async def cmd_clear(message: Message):
 
 @user_router.message(Command("hard_delete"))
 async def admin_clear(message: Message):
-    hard_reset_communications()
-    await message.answer("<b>Протоколы очищены.</b> Система перезапущена с нулевым индексом.", parse_mode="HTML")
+    user_id = message.from_user.id
 
+    # 1. Кто написал команду?
+    if user_id not in ADMIN_IDS:
+        # 2. Не админ — отказ, таблицу не трогаем
+        await message.answer(
+            "<i>Недостаточно прав для этой операции, Сэр.</i>",
+            parse_mode="HTML",
+        )
+        logger.warning(f"🚫 hard_delete отклонён: user_id={user_id}")
+        return
+
+    # 3. Админ — выполняем сброс
+    hard_reset_communications()
+    await message.answer(
+        "<b>Протоколы очищены.</b> Система перезапущена с нулевым индексом.",
+        parse_mode="HTML",
+    )
+    logger.info(f"🧹 hard_delete выполнен: user_id={user_id}")
 
 @user_router.message(Command("memory"))
 async def cmd_memory(message: Message):

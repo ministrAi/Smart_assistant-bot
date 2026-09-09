@@ -25,7 +25,16 @@ TOKEN = os.getenv('BOT_TOKEN') # Найдет значение по имени �
 MAX_ACTIVE_MESSAGES = 70
 MAX_ACTIVE_REFLECTION = 25
 DATABASE_URL = os.getenv('DATABASE_URL')
+# Список Telegram user_id, которым разрешён /hard_delete.
+_raw_admins = os.getenv("ADMIN_IDS", "")
+ADMIN_IDS: set[int] = {
+    int(x.strip())
+    for x in _raw_admins.split(",")
+    if x.strip().isdigit()
+}
+
 TEST_DB_URL = os.getenv('TEST_DB_URL')
 
 if __name__ == "__main__":
     print(f"Token: {'Found' if TOKEN else 'Not found'}")
+    print(f"Admins: {ADMIN_IDS}")
