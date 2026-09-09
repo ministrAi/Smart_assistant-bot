@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 AGENT_TIMEOUT = 60
 MAX_ITERATIONS = 5
 MAX_TOOL_CALLS = 3
-MAX_CRITIC_ATTEMPTS = 1
+MAX_CRITIC_ATTEMPTS = 2
 
 
 async def run_agent(user_id: int, message: str) -> str:
@@ -190,7 +190,5 @@ async def _run_agent_loop(user_id: int, message: str) -> str:
                     "tool_call_id": tool_call_id,
                     "content": str(result),
                 })
-        logger.warning(
-        f"⚠️ Превышен лимит: iterations={iterations}, tool_calls={tool_calls}"
-    )
-        return f"Прошу прощения, Сэр. Задача оказалась слишком сложной."
+    logger.warning(f"⚠️ Превышен лимит: iterations={iterations}, tool_calls={tool_calls}")
+    return f"Прошу прощения, Сэр. Задача оказалась слишком сложной."
