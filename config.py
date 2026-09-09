@@ -15,6 +15,8 @@ PRICING = {
     # "gpt-5.6-luna": {"input": 58.93, "output": 353.57},
     "claude-haiku-4-5-20251001": {"input": 131.25, "output": 656.25},
     "deepseek/deepseek-v4-flash": {"input": 16.5, "output": 33.00},
+    # "gpt-5.6-luna-2026-07-09": {"input": 23,57, "output": 141,43},
+    "gpt-5.6-luna-2026-07-09": {"input": 5.26, "output": 31.55},
 
 }
 
