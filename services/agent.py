@@ -145,64 +145,52 @@ async def _run_agent_loop(user_id: int, message: str) -> str:
 
         # ВЕТКА Б: вызов инструмента
         else:
-            # Подготовка и вызов инструмента
-            # Защита: нативный tool calling теоретически позволяет модели запросить
-            # несколько инструментов за один ответ — пока просто предупреждаем в логах
-            # и обрабатываем только первый вызов, чтобы не терять его молча.
-            if len(llm_response.get('tool_calls')) > 1:
+            tool_calls_list = llm_response.get("tool_calls") or []
+
+            if len(tool_calls_list) > 1:
                 logger.warning(
-                    f"⚠️ Модель вернула {len(llm_response.get('tool_calls'))} tool_calls, обрабатываем только первый"
+                    f"⚠️ Модель вернула {len(tool_calls_list)} tool_calls, обрабатываем все "
+                    f"(лимит реальных вызовов MAX_TOOL_CALLS={MAX_TOOL_CALLS})"
                 )
-            # Берём первый (и пока единственный обрабатываемый) вызов инструмента
-            tool_call = llm_response.get('tool_calls')[0]
 
-            # Имя инструмента приходит готовой строкой от API — не нужно парсить текст, как раньше делал parser.py через regex
-            tool_name = tool_call['function']['name']
-            tool_args = json.loads(tool_call['function']['arguments'])
-            tool_call_id = tool_call['id']
-            logger.info(f"🛠 Агент запрашивает инструмент: {tool_name} с аргументами {tool_args}")
+            for tool_call in tool_calls_list:
+                tool_name = tool_call["function"]["name"]
+                tool_args = json.loads(tool_call["function"]["arguments"] or "{}")
+                tool_call_id = tool_call["id"]
+                logger.info(f"🛠 Агент запрашивает инструмент: {tool_name} с аргументами {tool_args}")
 
-            tool = get_tool(tool_name)  # Ищем инструмент в реестре. Возвращает dict или None
+                tool = get_tool(tool_name)
 
-            # Если инструмент не найден — пишем об этом в Observation
-            if not tool:
-                result = f"Инструмент '{tool_name}' не найден в реестре"
-                logger.warning(f"⚠️ {result}")
-
-
-            elif tool_calls >= MAX_TOOL_CALLS:
-                    # Если лимит реальных вызовов исчерпан — не выполняем инструмент,
-                    # сообщаем об этом модели как Observation, чтобы она сама
-                    # перешла к Final Answer на следующей итерации
-                    result = "Лимит вызовов инструментов исчерпан. Сформируй финальный ответ на основе уже полученных данных."
+                if not tool:
+                    result = f"Инструмент '{tool_name}' не найден в реестре"
                     logger.warning(f"⚠️ {result}")
+                elif tool_calls >= MAX_TOOL_CALLS:
+                    result = (
+                        "Лимит вызовов инструментов исчерпан. "
+                        "Сформируй финальный ответ на основе уже полученных данных."
+                    )
+                    logger.warning(f"⚠️ {result}")
+                else:
+                    if "user_id" in tool["parameters"]:
+                        tool_args["user_id"] = user_id
+                    tool_calls += 1
+                    try:
+                        if asyncio.iscoroutinefunction(tool["function"]):
+                            result = await tool["function"](**tool_args)
+                        else:
+                            result = tool["function"](**tool_args)
+                        logger.info(f"✅ Результат инструмента: {result}")
+                    except Exception as e:
+                        result = f"Ошибка инструмента '{tool_name}': {e}"
+                        logger.error(f"❌ {result}")
 
-            else:
-                # Автоматически добавляем user_id, если инструмент его ожидает
-                if "user_id" in tool["parameters"]:
-                    tool_args["user_id"] = user_id
-                tool_calls += 1
-
-                try:
-                    if asyncio.iscoroutinefunction(tool["function"]):
-                        result = await tool["function"](**tool_args)
-
-                    else:
-                        result = tool["function"](**tool_args)
-                    logger.info(f"✅ Результат инструмента: {result}")
-
-                except Exception as e:
-                    result = f"Ошибка инструмента '{tool_name}': {e}"
-                    logger.error(f"❌ {result}")
-
-            # Добавляем результат в историю как Observation — всегда
-            # выполняется для обеих веток
-            messages.append({
-                "role": "tool",
-                "tool_call_id": tool_call_id,
-                "content": str(result)
-            })
-    logger.warning(
-    f"⚠️ Превышен лимит: iterations={iterations}, tool_calls={tool_calls}"
-)
-    return f"Прошу прощения, Сэр. Задача оказалась слишком сложной."
+                # на КАЖДЫЙ tool_call_id — даже при ошибке/лимите
+                messages.append({
+                    "role": "tool",
+                    "tool_call_id": tool_call_id,
+                    "content": str(result),
+                })
+        logger.warning(
+        f"⚠️ Превышен лимит: iterations={iterations}, tool_calls={tool_calls}"
+    )
+        return f"Прошу прощения, Сэр. Задача оказалась слишком сложной."
