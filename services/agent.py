@@ -111,7 +111,6 @@ async def _run_agent_loop(user_id: int, message: str) -> str:
                 raise e  # Если это другая ошибка ValueError, прокидываем её дальше
 
         # Сырой ответ LLM — debug-уровень, для расследования проблем формата
-        logger.debug(f"📩 RAW от LLM: {llm_response!r}")
         # Текст рассуждений модели (Thought/Plan/Predict слиты в content)
         if llm_response['content']:
             logger.info(f"🧠 {llm_response['content']}")
