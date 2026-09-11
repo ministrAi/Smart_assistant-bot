@@ -1,5 +1,6 @@
 from .base import DatabaseManager
-
+import logging
+logger = logging.getLogger(__name__)
 
 # Сохранение факта
 def add_fact(user_id, fact, importance):
@@ -24,6 +25,10 @@ def add_fact(user_id, fact, importance):
 # Получение фактов
 def get_facts(user_id):
     conn = DatabaseManager.get_connection()
+    # Правило 1: нет соединения → пустой список, не None
+    if not conn:
+        return []
+
     try:
         cursor = conn.cursor()
         cursor.execute("""
@@ -46,11 +51,17 @@ def get_facts(user_id):
                     "content": fact,
                     "importance": importance
                 })
+        return fact_list
+
+
+    except Exception as e:
+        # Правило 2: любая ошибка SQL → лог + пустой список
+        logger.error(f"❌ get_facts failed user_id={user_id}: {e}")
+        return []
 
     finally:
-        DatabaseManager.put_connection(conn)
-
-    return fact_list
+        # Правило 3: закрыть соединение всегда (и при успехе, и при ошибке)
+        conn.close()
 
 
 # Мягкое удаление факта

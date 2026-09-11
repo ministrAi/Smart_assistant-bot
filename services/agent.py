@@ -145,6 +145,8 @@ async def _run_agent_loop(user_id: int, message: str) -> str:
 
         # ВЕТКА Б: вызов инструмента
         else:
+            # 1. Извлекаем список запрошенных инструментов.
+            # Модель может запросить сразу несколько (Parallel Tool Calling).
             tool_calls_list = llm_response.get("tool_calls") or []
 
             if len(tool_calls_list) > 1:
@@ -152,39 +154,51 @@ async def _run_agent_loop(user_id: int, message: str) -> str:
                     f"⚠️ Модель вернула {len(tool_calls_list)} tool_calls, обрабатываем все "
                     f"(лимит реальных вызовов MAX_TOOL_CALLS={MAX_TOOL_CALLS})"
                 )
-
+            # 2. Итерируемся по каждому запросу инструмента
             for tool_call in tool_calls_list:
                 tool_name = tool_call["function"]["name"]
+
+                # Парсим аргументы. LLM всегда отдаёт строку, её нужно превратить в dict.
                 tool_args = json.loads(tool_call["function"]["arguments"] or "{}")
+
+                # ID конкретного вызова — критически важен. По нему LLM поймёт, к какому запросу относится наш ответ.
                 tool_call_id = tool_call["id"]
                 logger.info(f"🛠 Агент запрашивает инструмент: {tool_name} с аргументами {tool_args}")
 
+                # 3. Достаём функцию из нашего паттерна Registry
                 tool = get_tool(tool_name)
 
+                # 4. Блок проверок (Guardrails)
                 if not tool:
+                    # Инструмент выдуман моделью (галлюцинация)
                     result = f"Инструмент '{tool_name}' не найден в реестре"
                     logger.warning(f"⚠️ {result}")
                 elif tool_calls >= MAX_TOOL_CALLS:
+                    # Защита от бесконечных циклов и перерасхода токенов
                     result = (
                         "Лимит вызовов инструментов исчерпан. "
                         "Сформируй финальный ответ на основе уже полученных данных."
                     )
                     logger.warning(f"⚠️ {result}")
                 else:
+                    # 5. Исполнение инструмента
+                    # Прокидываем контекст пользователя, если инструмент этого требует
                     if "user_id" in tool["parameters"]:
                         tool_args["user_id"] = user_id
                     tool_calls += 1
                     try:
+                        # Поддержка как асинхронных, так и синхронных функций (гибкость архитектуры)
                         if asyncio.iscoroutinefunction(tool["function"]):
                             result = await tool["function"](**tool_args)
                         else:
                             result = tool["function"](**tool_args)
                         logger.info(f"✅ Результат инструмента: {result}")
                     except Exception as e:
+                        # Изолируем ошибку: падение инструмента не должно убивать агента
                         result = f"Ошибка инструмента '{tool_name}': {e}"
                         logger.error(f"❌ {result}")
-
-                # на КАЖДЫЙ tool_call_id — даже при ошибке/лимите
+                # 6. Формирование ответа (Observation)
+                # Нативный tool calling требует роль "tool" и ОБЯЗАТЕЛЬНО передачи tool_call_id.
                 messages.append({
                     "role": "tool",
                     "tool_call_id": tool_call_id,
